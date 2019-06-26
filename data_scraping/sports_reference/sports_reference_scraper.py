@@ -32,7 +32,7 @@ def scrape_per_100_possessions(save=False):
     """
     sports_ref_per100 = pd.DataFrame()
     errors = []
-    player_ids_df = pd.read_csv('/Users/chrisfeller/Desktop/NBA_Portfolio/Data/NBA_Draft/Player_Ids.csv')
+    player_ids_df = pd.read_csv('../../data/player_ids/player_table.csv')
     for index, row in player_ids_df.iterrows():
         sleep(np.random.randint(10, 15))
         url = "https://www.sports-reference.com/cbb/players/{0}.html#players_per_poss::none".format(row['sportsref_id'])
@@ -88,7 +88,7 @@ def scrape_advance(save=False):
     """
     sports_ref_advance = pd.DataFrame()
     errors = []
-    player_ids_df = pd.read_csv('/Users/chrisfeller/Desktop/NBA_Portfolio/Data/NBA_Draft/Player_Ids.csv')
+    player_ids_df = pd.read_csv('../../data/player_ids/player_table.csv')
     for index, row in player_ids_df.iterrows():
         sleep(np.random.randint(10, 15))
         url = "https://www.sports-reference.com/cbb/players/{0}.html#players_advanced::none".format(row['sportsref_id'])
@@ -193,6 +193,43 @@ def scrape_per_40_min(save=False):
         pass
     return sports_ref_per40, missing_players_df
 
+def create_college_base_table():
+    """
+    Combine Per 40-Minute, Per 100 Possessions, and Advanced DateFrames
+    to create comprehensive base table for college player stats for those players
+    who played in the NBA since the 2004-2005 season.
+
+    Args:
+        None
+
+    Returns:
+        college_stats_df (DataFrame): College statistics for those players who
+        played in the NBA between 2004-2005 and 2018-2019.
+    """
+    sports_ref_per100 = pd.read_csv('../../data/ncaa/sports_reference/player_data/per100_poss/per100_poss.csv')
+    sports_ref_advance = pd.read_csv('../../data/ncaa/sports_reference/player_data/advanced/advanced.csv')
+    sports_ref_per_40 = pd.read_csv('../../data/ncaa/sports_reference/player_data/per40_min/per40_min.csv')
+
+    college_stats_df = sports_ref_advance.merge(sports_ref_per_40, on=['PLAYER', 'SEASON', 'SCHOOL'], how='left', suffixes=('', '_duplicate'))
+    college_stats_df.drop([col for col in college_stats_df.columns if '_duplicate' in col], axis=1, inplace=True)
+    college_stats_df = college_stats_df.merge(sports_ref_per100, on=['PLAYER', 'SEASON', 'SCHOOL'], how='left', suffixes=('', '_duplicate'))
+    college_stats_df.drop([col for col in college_stats_df.columns if '_duplicate' in col], axis=1, inplace=True)
+
+    college_stats_df = college_stats_df[['PLAYER', 'SEASON', 'SCHOOL', 'CONFERENCE',
+       'G', 'GS', 'MP', 'PER', 'TS%', 'eFG%',
+       '3PAr', 'FTr', 'PProd', 'ORB%', 'DRB%', 'TRB%', 'AST%', 'STL%', 'BLK%',
+       'TOV%', 'USG%', 'OWS', 'DWS', 'WS', 'WS/40', 'OBPM', 'DBPM', 'BPM',
+        'PER40_FG', 'PER40_FGA', 'PER40_FG%', 'PER40_2P', 'PER40_2PA',
+       'PER40_2P%', 'PER40_3P', 'PER40_3PA', 'PER40_3P%', 'PER40_FT',
+       'PER40_FTA', 'PER40_FT%', 'PER40_TRB', 'PER40_AST', 'PER40_STL',
+       'PER40_BLK', 'PER40_TOV', 'PER40_PF', 'PER40_PTS', 'PER100_FG',
+       'PER100_FGA', 'PER100_FG%', 'PER100_2P', 'PER100_2PA', 'PER100_2P%',
+       'PER100_3P', 'PER100_3PA', 'PER100_3P%', 'PER100_FT', 'PER100_FTA',
+       'PER100_FT%', 'PER100_TRB', 'PER100_AST', 'PER100_STL', 'PER100_BLK',
+       'PER100_TOV', 'PER100_PF', 'PER100_PTS', 'PER100_ORtg', 'PER100_DRtg', 'SPORTS_REF_ID', ]]
+
+    return college_stats_df
+
 if __name__=='__main__':
     # Scrape Sports-Reference Per 100 Possessions Table
     sports_ref_per100, per100_missing_df = scrape_per_100_possessions(save=False)
@@ -202,3 +239,7 @@ if __name__=='__main__':
 
     # Scrape Sports-Reference Per 40 Minutes Tables
     sports_ref_per_40, per40_missing_df = scrape_per_40_min(save=False)
+
+    # Join tables to create individual player base table
+    college_stats_df = create_college_base_table()
+    college_stats_df.to_csv('../../data/ncaa/sports_reference/player_data/combined/sports_ref_player_data.csv', index=False)
