@@ -83,4 +83,4 @@ for (year in 2014:2019) {
 }
 
 # * Save data ----
-write.csv(rpm, file = "~/Documents/nba_positional_scarcity/data/espn_nba_rpm.csv", row.names = FALSE)
+write.csv(rpm, file = "../../data/nba/espn/espn_nba_rpm.csv", row.names = FALSE)

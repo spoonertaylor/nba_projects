@@ -129,5 +129,5 @@ bbref_positional_estimates = function(bbref_ids, parallel = TRUE) {
 
 positions_df = bbref_positional_estimates(bbref_players$bbref_id)
 
-write.csv(positions_df, 'data/bbref_player_data/player_position_estimates.csv',
+write.csv(positions_df, '../../data/nba/basketball_reference/player_data/positional_estimates/player_position_estimates.csv',
           row.names = FALSE)

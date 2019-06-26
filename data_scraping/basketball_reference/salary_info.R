@@ -183,7 +183,7 @@ bbref_salary_history= function() {
   
 }
 
-bbref_players = read.csv('~/Documents/nba_positional_scarcity/data/player_table.csv',
+bbref_players = read.csv('../../data/player_ids/player_table.csv',
                          stringsAsFactors = FALSE)
 salary_info = bbref_get_salary(bbref_players$bbref_link, TRUE)
 salary_cap = bbref_salary_history()

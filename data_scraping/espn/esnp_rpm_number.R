@@ -64,7 +64,7 @@ for (year in 2014:2019) {
 }
 
 # * Join ESPN ID's ----
-espn_player_ids = read.csv("~/Documents/nba_positional_scarcity/data/espn_player_id.csv",
+espn_player_ids = read.csv('../../data/player_ids/player_table.csv',
                            stringsAsFactors = FALSE)
 rpm2 = dplyr::left_join(rpm, espn_player_ids, by = "player_name")
 # Filter out some duplicates.
@@ -73,4 +73,4 @@ rpm2 = rpm2 %>% dplyr::filter(season >= first_season, season <= last_season, esp
   dplyr::select(player_name, pos, team, gp, mpg, orpm, drpm, rpm, wins, season, espn_link, espn_number, espn_id)
 
 # * Save data ----
-write.csv(rpm, file = "data/espn_nba_rpm.csv")
+write.csv(rpm, file = "../../data/nba/espn/espn_nba_rpm.csv")
