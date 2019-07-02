@@ -1,10 +1,4 @@
 `%>%` = dplyr::`%>%`
-players = data.frame(
-  player_name = c("LaMarcus Alridge", 
-                  "Giannis Antetokounmpo"),
-  bbref_id = c("aldrila01","antetgi01"),
-  bbref_url = c("a/aldrila01","a/antetgi01")
-)
 
 # * Functions ----
 
