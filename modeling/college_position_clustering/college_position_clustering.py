@@ -142,30 +142,47 @@ def cluster_and_plot(X, n_clusters):
 if __name__=='__main__':
     # Read in college statistics (per 100 possession, per 40 minutes, and advanced)
     # for all players who played in the NBA between 2004 and 2019. Records are
-    # at the season level in addiiton to an aggregated 'Career' record.
+    # at the season level in additon to an aggregated 'Career' record.
     sports_ref = pd.read_csv('../../data/ncaa/sports_reference/player_data/combined/sports_ref_player_data.csv')
 
-    # Features on which to cluster
-    cluster_features = ['G', 'GS', 'MP', 'PER',
+    # Read in Measurable Data
+    measurables = pd.read_csv('../../data/nba/basketball_reference/player_data/measurements/player_measurements.csv')
+
+    # Read in bridge table
+    bridge = pd.read_csv('../../data/player_ids/player_table.csv')
+
+    # Joins
+    sports_ref_merge = pd.merge(sports_ref, bridge, left_on='SPORTS_REF_ID', right_on='sportsref_id', how='inner')
+    sports_ref_merge = sports_ref_merge[['PLAYER', 'SEASON', 'SCHOOL', 'CONFERENCE', 'G', 'GS', 'MP', 'PER',
        'TS%', 'eFG%', '3PAr', 'FTr', 'PProd', 'ORB%', 'DRB%', 'TRB%', 'AST%',
        'STL%', 'BLK%', 'TOV%', 'USG%', 'OWS', 'DWS', 'WS', 'WS/40', 'OBPM',
-       'DBPM', 'BPM', 'PER100_FG', 'PER100_FGA', 'PER100_FG%', 'PER100_2P', 'PER100_2PA',
+       'DBPM', 'BPM', 'PER40_FG', 'PER40_FGA', 'PER40_FG%', 'PER40_2P',
+       'PER40_2PA', 'PER40_2P%', 'PER40_3P', 'PER40_3PA', 'PER40_3P%',
+       'PER40_FT', 'PER40_FTA', 'PER40_FT%', 'PER40_TRB', 'PER40_AST',
+       'PER40_STL', 'PER40_BLK', 'PER40_TOV', 'PER40_PF', 'PER40_PTS',
+       'PER100_FG', 'PER100_FGA', 'PER100_FG%', 'PER100_2P', 'PER100_2PA',
        'PER100_2P%', 'PER100_3P', 'PER100_3PA', 'PER100_3P%', 'PER100_FT',
        'PER100_FTA', 'PER100_FT%', 'PER100_TRB', 'PER100_AST', 'PER100_STL',
        'PER100_BLK', 'PER100_TOV', 'PER100_PF', 'PER100_PTS', 'PER100_ORtg',
-       'PER100_DRtg']
+       'PER100_DRtg', 'SPORTS_REF_ID', 'bbref_id']]
+
+    college_df = pd.merge(sports_ref_merge, measurables, on='bbref_id', how='left')
+
+    # Features on which to cluster
+    cluster_features = ['height', 'weight', '3PAr', 'ORB%', 'DRB%', 'AST%', 'BLK%', 'USG%', 'TS%']
 
     # Filter to records with Per 100 Possession and Advanced  data
     # (removes most players before 2010). This is the group on which to cluster.
-    per100 = sports_ref[sports_ref[cluster_features].notnull().all(axis=1)]
+    per100 = college_df[college_df[cluster_features].notnull().all(axis=1)]
 
     # Filter to records without Per 100 Possessions and Advance data
     # (records before 2010)
-    non_per100 = sports_ref[sports_ref[cluster_features].isnull().any(axis=1)]
+    non_per100 = college_df[college_df[cluster_features].isnull().any(axis=1)]
 
     # Standardize features
     scaler = StandardScaler()
     X = scaler.fit_transform(per100[cluster_features])
+
 
     # Elbow Plot
     elbow_plot(X, 15)
@@ -174,4 +191,9 @@ if __name__=='__main__':
     silhouette_score_plot(X, 15)
 
     # Silhouette Analysis
-    cluster_and_plot(X, 4)
+    cluster_and_plot(X, 3)
+
+    # Cluster K=4
+    kmeans = KMeans(n_clusters=3)
+    kmeans.fit(X)
+    per100['CLUSTER'] = kmeans.labels_
