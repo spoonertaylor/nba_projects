@@ -263,7 +263,7 @@ if __name__=='__main__':
     incomplete_records['POSITION_CLUSTER'] = knn.predict(X_test)
 
     # Join dataframes
-    df_out = pd.concat([complete_records, incomplete_records]) # [['PLAYER', 'SEASON', 'SPORTS_REF_ID', 'bbref_id', 'POSITION_CLUSTER']]
+    df_out = pd.concat([complete_records, incomplete_records])[['PLAYER', 'SEASON', 'SPORTS_REF_ID', 'bbref_id', 'POSITION_CLUSTER']]
     df_out['POSITION_CLUSTER'] = df_out['POSITION_CLUSTER'].replace({'0': 'Wing', '1': 'Guard', '2': 'Big'})
 
     # Write Data
