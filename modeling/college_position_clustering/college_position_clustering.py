@@ -2,7 +2,7 @@
 # Description: Cluster players into positional types based on their seasonal
 # college box-score statistics
 # Data Sources: Sports-Reference
-# Last Updated: 6/26/2019
+# Last Updated: 7/12/2019
 
 
 import numpy as np
@@ -11,13 +11,30 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, silhouette_samples
+from sklearn.neighbors import KNeighborsClassifier
+
+import warnings
+from sklearn.exceptions import DataConversionWarning
+warnings.filterwarnings(action='ignore', category=DataConversionWarning)
 
 # Plotting Style
 plt.style.use('fivethirtyeight')
 
 def elbow_plot(standardized_data, max_k):
+    """
+    Plots the Residual Sum of Squares for various numbers of clusters in the K-Means
+    clustering algorithm. Displays a potential 'elbow' indicating an 'optimal'
+    number of clusters.
+
+    Args:
+        standardized_data: pandas DataFrame with standardized data
+        max_k: Maximum number of clusters with which to fit a K-Means algorithm
+
+    Returns:
+        None (Displays Plot)
+    """
     ks = list(range(2, max_k))
     rss_list = []
     for k in ks:
@@ -34,6 +51,17 @@ def elbow_plot(standardized_data, max_k):
     plt.show()
 
 def silhouette_score_plot(standardized_data, max_k):
+    """
+    Plots the Silhouette Score for various numbers of clusters in the K-Means
+    clustering algorithm. Displays a potential 'optimal' number of clusters.
+
+    Args:
+        standardized_data: pandas DataFrame with standardized data
+        max_k: Maximum number of clusters with which to fit a K-Means algorithm
+
+    Returns:
+        None (Displays Plot)
+    """
     def get_silhouette_score(nclust):
         km = KMeans(nclust, random_state=10, n_jobs=-1)
         km.fit(standardized_data)
@@ -51,6 +79,27 @@ def silhouette_score_plot(standardized_data, max_k):
     plt.show()
 
 def cluster_and_plot(X, n_clusters):
+    """
+    Plots the Silhouette Analysis for a specified number of clusters. Silhouette
+    analysis can be used to study the separation distance between the resulting
+    clusters. The silhouette plot displays a measure of how close each point in
+    one cluster is to points in the neighboring clusters and thus provides a way
+    to assess parameters like number of clusters visually. This measure has a
+    range of [-1, 1].
+
+    Silhouette coefficients (as these values are referred to as) near +1 indicate
+    that the sample is far away from the neighboring clusters. A value of 0 indicates
+    that the sample is on or very close to the decision boundary between two neighboring
+    clusters and negative values indicate that those samples might have been assigned
+    to the wrong cluster. (sklearn documentation)
+
+    Args:
+        X: pandas DataFrame with standardized data
+        n_clusters: Number of clusters to build in the K-Means algorithm.
+
+    Returns:
+        None (Displays Plot)
+    """
     # Create a subplot with 1 row and 2 columns
     fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(18, 5))
 
@@ -142,30 +191,47 @@ def cluster_and_plot(X, n_clusters):
 if __name__=='__main__':
     # Read in college statistics (per 100 possession, per 40 minutes, and advanced)
     # for all players who played in the NBA between 2004 and 2019. Records are
-    # at the season level in addiiton to an aggregated 'Career' record.
+    # at the season level in additon to an aggregated 'Career' record.
     sports_ref = pd.read_csv('../../data/ncaa/sports_reference/player_data/combined/sports_ref_player_data.csv')
 
-    # Features on which to cluster
-    cluster_features = ['G', 'GS', 'MP', 'PER',
+    # Read in Measurement Data (height and weight)
+    measurables = pd.read_csv('../../data/nba/basketball_reference/player_data/measurements/player_measurements.csv')
+
+    # Read in bridge table with sports-reference and basketball-reference id's to
+    # join data together
+    bridge = pd.read_csv('../../data/player_ids/player_table.csv')
+
+    # Join dataframes
+    sports_ref_merge = pd.merge(sports_ref, bridge, left_on='SPORTS_REF_ID', right_on='sportsref_id', how='inner')
+    sports_ref_merge = sports_ref_merge[['PLAYER', 'SEASON', 'SCHOOL', 'CONFERENCE', 'G', 'GS', 'MP', 'PER',
        'TS%', 'eFG%', '3PAr', 'FTr', 'PProd', 'ORB%', 'DRB%', 'TRB%', 'AST%',
        'STL%', 'BLK%', 'TOV%', 'USG%', 'OWS', 'DWS', 'WS', 'WS/40', 'OBPM',
-       'DBPM', 'BPM', 'PER100_FG', 'PER100_FGA', 'PER100_FG%', 'PER100_2P', 'PER100_2PA',
+       'DBPM', 'BPM', 'PER40_FG', 'PER40_FGA', 'PER40_FG%', 'PER40_2P',
+       'PER40_2PA', 'PER40_2P%', 'PER40_3P', 'PER40_3PA', 'PER40_3P%',
+       'PER40_FT', 'PER40_FTA', 'PER40_FT%', 'PER40_TRB', 'PER40_AST',
+       'PER40_STL', 'PER40_BLK', 'PER40_TOV', 'PER40_PF', 'PER40_PTS',
+       'PER100_FG', 'PER100_FGA', 'PER100_FG%', 'PER100_2P', 'PER100_2PA',
        'PER100_2P%', 'PER100_3P', 'PER100_3PA', 'PER100_3P%', 'PER100_FT',
        'PER100_FTA', 'PER100_FT%', 'PER100_TRB', 'PER100_AST', 'PER100_STL',
        'PER100_BLK', 'PER100_TOV', 'PER100_PF', 'PER100_PTS', 'PER100_ORtg',
-       'PER100_DRtg']
+       'PER100_DRtg', 'SPORTS_REF_ID', 'bbref_id']]
 
-    # Filter to records with Per 100 Possession and Advanced  data
-    # (removes most players before 2010). This is the group on which to cluster.
-    per100 = sports_ref[sports_ref[cluster_features].notnull().all(axis=1)]
+    college_df = pd.merge(sports_ref_merge, measurables, on='bbref_id', how='left')
 
-    # Filter to records without Per 100 Possessions and Advance data
-    # (records before 2010)
-    non_per100 = sports_ref[sports_ref[cluster_features].isnull().any(axis=1)]
+    # Features on which to cluster (same as NBA clustering)
+    cluster_features = ['height', 'weight', '3PAr', 'ORB%', 'DRB%', 'AST%', 'BLK%', 'USG%', 'TS%']
+
+    # Filter to records with complete information in the list of features above
+    # on which we will cluster. Removes most players before 2010.
+    complete_records = college_df[college_df[cluster_features].notnull().all(axis=1)]
+
+    # Filter to records with incomplete information in the list of features above.
+    # Includes mostly players from before 2010.
+    incomplete_records = college_df[college_df[cluster_features].isnull().any(axis=1)]
 
     # Standardize features
     scaler = StandardScaler()
-    X = scaler.fit_transform(per100[cluster_features])
+    X = scaler.fit_transform(complete_records[cluster_features])
 
     # Elbow Plot
     elbow_plot(X, 15)
@@ -174,4 +240,82 @@ if __name__=='__main__':
     silhouette_score_plot(X, 15)
 
     # Silhouette Analysis
-    cluster_and_plot(X, 4)
+    cluster_and_plot(X, 3)
+
+    # Cluster K=3 (Guards, Wings, Bigs)
+    kmeans = KMeans(n_clusters=3, random_state=10)
+    kmeans.fit(X)
+    complete_records['POSITION_CLUSTER'] = kmeans.labels_
+    complete_records['POSITION_CLUSTER'] = complete_records['POSITION_CLUSTER'].astype(str)
+
+    # Scale Per-40 Features and fill missing Per-40 with global mean
+    features_40 = ['PER40_FG', 'PER40_FGA', 'PER40_FG%', 'PER40_2P',
+       'PER40_2PA', 'PER40_2P%', 'PER40_3P', 'PER40_3PA', 'PER40_3P%',
+       'PER40_FT', 'PER40_FTA', 'PER40_FT%', 'PER40_TRB', 'PER40_AST',
+       'PER40_STL', 'PER40_BLK', 'PER40_TOV', 'PER40_PF', 'PER40_PTS',
+       'height', 'weight']
+    X_train, y_train = scaler.fit_transform(complete_records[features_40].apply(lambda x: x.fillna(x.mean()),axis=0)), complete_records['POSITION_CLUSTER'].values
+    X_test = scaler.fit_transform(incomplete_records[features_40].apply(lambda x: x.fillna(x.mean()),axis=0))
+
+    # Classify records without complete information in the clustering step
+    knn = KNeighborsClassifier(n_neighbors=5)
+    knn.fit(X_train, y_train)
+    incomplete_records['POSITION_CLUSTER'] = knn.predict(X_test)
+
+    # Join dataframes
+    df_out = pd.concat([complete_records, incomplete_records])[['PLAYER', 'SEASON', 'SPORTS_REF_ID', 'bbref_id', 'POSITION_CLUSTER']]
+    df_out['POSITION_CLUSTER'] = df_out['POSITION_CLUSTER'].replace({'0': 'Wing', '1': 'Guard', '2': 'Big'})
+
+    # Write Data
+    df_out.to_csv('../../data/ncaa/sports_reference/player_data/positions/positions.csv', index=False)
+
+    # Cluster EDA
+    # Total Size of Cluster
+    fig, ax = plt.subplots(figsize=(9, 5))
+    sns.countplot(x='POSITION_CLUSTER', data=df_out[df_out['SEASON']=='Career'])
+    ax.set_xlabel('Position Cluster', fontsize=12)
+    ax.set_ylabel('Player Count', fontsize=12)
+    plt.title('Player Count by Position Cluster', fontsize=18)
+    plt.tight_layout()
+    plt.show()
+
+    # Plot Clustering Features
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(18, 5), sharex=True)
+    sns.violinplot(x='POSITION_CLUSTER', y='height', data=df_out[df_out['SEASON']=='Career'], cut=0, ax=axs[0])
+    sns.violinplot(x='POSITION_CLUSTER', y='weight', data=df_out[df_out['SEASON']=='Career'], cut=0, ax=axs[1])
+    sns.violinplot(x='POSITION_CLUSTER', y='3PAr', data=df_out[df_out['SEASON']=='Career'], cut=0, ax=axs[2])
+    axs[0].set_xlabel('')
+    axs[0].set_ylabel('Height (Inches)')
+    axs[1].set_xlabel('')
+    axs[1].set_ylabel('Weight (lbs.)')
+    axs[2].set_xlabel('')
+    axs[2].set_ylabel('3-Point Attempt Rate')
+    axs[1].set_title('Distribution of Cluster Features by Position Cluster')
+    plt.tight_layout()
+    plt.show()
+
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(18, 5), sharex=True)
+    sns.violinplot(x='POSITION_CLUSTER', y='ORB%', data=df_out[df_out['SEASON']=='Career'], cut=0, ax=axs[0])
+    sns.violinplot(x='POSITION_CLUSTER', y='DRB%', data=df_out[df_out['SEASON']=='Career'], cut=0, ax=axs[1])
+    sns.violinplot(x='POSITION_CLUSTER', y='AST%', data=df_out[df_out['SEASON']=='Career'], cut=0, ax=axs[2])
+    axs[0].set_xlabel('')
+    axs[0].set_ylabel('Offensive Rebounding %')
+    axs[1].set_xlabel('')
+    axs[1].set_ylabel('Defensive Rebounding %')
+    axs[2].set_xlabel('')
+    axs[2].set_ylabel('Assist %')
+    plt.tight_layout()
+    plt.show()
+
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(18, 5), sharex=True)
+    sns.violinplot(x='POSITION_CLUSTER', y='BLK%', data=df_out[df_out['SEASON']=='Career'], cut=0, ax=axs[0])
+    sns.violinplot(x='POSITION_CLUSTER', y='USG%', data=df_out[df_out['SEASON']=='Career'], cut=0, ax=axs[1])
+    sns.violinplot(x='POSITION_CLUSTER', y='TS%', data=df_out[df_out['SEASON']=='Career'], cut=0, ax=axs[2])
+    axs[0].set_xlabel('')
+    axs[0].set_ylabel('Block %')
+    axs[1].set_xlabel('Position Cluster')
+    axs[1].set_ylabel('Usage %')
+    axs[2].set_xlabel('')
+    axs[2].set_ylabel('True Shooting %')
+    plt.tight_layout()
+    plt.show()
