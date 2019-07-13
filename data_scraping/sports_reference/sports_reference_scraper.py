@@ -54,10 +54,10 @@ def scrape_per_100_possessions(save=False):
                              ['Season', 'School', 'Conf', 'G', 'GS', 'MP']]
                 df['PLAYER'] = row['player_name']
                 df['SPORTS_REF_ID'] = row['sportsref_id']
-                errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_year']))
+                errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_season']))
         sports_ref_per100 = sports_ref_per100.append(df, sort=False)
-        errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_year']))
-    missing_players_df = pd.DataFrame([x for x in errors if errors.count(x)==1], columns=['PLAYER_NAME', 'PLAYER_ID', 'BBREF_ID', 'FIRST_YEAR'])
+        errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_season']))
+    missing_players_df = pd.DataFrame([x for x in errors if errors.count(x)==1], columns=['PLAYER_NAME', 'PLAYER_ID', 'BBREF_ID', 'FIRST_SEASON'])
     sports_ref_per100 = sports_ref_per100.drop_duplicates()
     if save:
         parent_directory = '../../data/ncaa/sports_reference/player_data/per100_poss/'
@@ -125,10 +125,10 @@ def scrape_advance(save=False):
                              ['Season', 'School', 'Conf']]
                 df['PLAYER'] = row['player_name']
                 df['SPORTS_REF_ID'] = row['sportsref_id']
-                errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_year']))
+                errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_season']))
         sports_ref_advance = sports_ref_advance.append(df, sort=False)
-        errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_year']))
-    missing_players_df = pd.DataFrame([x for x in errors if errors.count(x)==1], columns=['PLAYER_NAME', 'PLAYER_ID', 'BBREF_ID', 'FIRST_YEAR'])
+        errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_season']))
+    missing_players_df = pd.DataFrame([x for x in errors if errors.count(x)==1], columns=['PLAYER_NAME', 'PLAYER_ID', 'BBREF_ID', 'FIRST_SEASON'])
     sports_ref_advance = sports_ref_advance.drop_duplicates()
     if save:
         parent_directory = '../../data/ncaa/sports_reference/player_data/advanced/'
@@ -179,10 +179,11 @@ def scrape_per_40_min(save=False):
                              ['Season', 'School', 'Conf', 'G', 'GS', 'MP']]
                 df['PLAYER'] = row['player_name']
                 df['SPORTS_REF_ID'] = row['sportsref_id']
-                errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_year']))
+                errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_season']))
         sports_ref_per40 = sports_ref_per40.append(df, sort=False)
-        errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_year']))
-    missing_players_df = pd.DataFrame([x for x in errors if errors.count(x)==1], columns=['PLAYER_NAME', 'PLAYER_ID', 'BBREF_ID', 'FIRST_YEAR'])
+        errors.append((row['player_name'], row['sportsref_id'], row['bbref_id'], row['first_season']))
+        print(row['player_name'])
+    missing_players_df = pd.DataFrame([x for x in errors if errors.count(x)==1], columns=['PLAYER_NAME', 'PLAYER_ID', 'BBREF_ID', 'FIRST_SEASON'])
     sports_ref_per40 = sports_ref_per40.drop_duplicates()
     if save:
         parent_directory = '../../data/ncaa/sports_reference/player_data/per40_min/'
