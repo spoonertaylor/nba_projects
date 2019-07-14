@@ -1,7 +1,7 @@
 # Project: Feature Engineering
 # Description: Engineer potentential features for player projection model.
 # Data Sources: Basketball-Reference and ESPN
-# Last Updated: 7/13/2019
+# Last Updated: 7/14/2019
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ def unweighted_average(df, col):
 
     Args:
         df: pandas DataFrame with statistics at the player/season level with
-        partial seasons resulting from trades removed
+        partial seasons resulting from trades removed.
         col: column on with which to calculate the three-season average.
 
     Returns:
@@ -60,13 +60,13 @@ def weighted_average(df, col):
 
     Returns:
         df: Original pandas Dataframe with three-season weighted average added
-        as new column with the naming convention 'column_3AVG'
+        as new column with the naming convention 'column_3WAVG'
     """
     wts3 = np.array([1, 2, 3])
     wts2 = np.array([1, 2])
-    df['3_season_avg'] = df.groupby(['PLAYER', 'BBREF_ID'])[col].apply(lambda x: x.rolling(window=3).apply(weight_3season(wts3)).round(3))
-    df['2_season_avg'] = df.groupby(['PLAYER', 'BBREF_ID'])[col].apply(lambda x: x.rolling(window=2).apply(weight_2seasons(wts2)).round(3))
-    df['{}_3AVG'.format(col)] = df['3_season_avg'].fillna(df['2_season_avg']).fillna(df[col])
+    df['3_season_avg'] = df.groupby(['PLAYER', 'BBREF_ID'])[col].apply(lambda x: x.rolling(window=3).apply(weight_3season(wts3), raw=True).round(3))
+    df['2_season_avg'] = df.groupby(['PLAYER', 'BBREF_ID'])[col].apply(lambda x: x.rolling(window=2).apply(weight_2seasons(wts2), raw=True).round(3))
+    df['{}_3WAVG'.format(col)] = df['3_season_avg'].fillna(df['2_season_avg']).fillna(df[col])
     df.drop(['3_season_avg', '2_season_avg'], axis=1, inplace=True)
     return df
 
@@ -89,13 +89,55 @@ if __name__=='__main__':
                             (bbref_combined['TEAM']=='TOT')) |
                             (bbref_combined.groupby(['BBREF_ID', 'SEASON'])['TEAM'].transform('size')<=1)]
 
-    # Create column w/ last season stat and avg stat over previous three seasons
-    df_test = bbref_combined[['PLAYER',  'BBREF_ID', 'SEASON', 'MP', 'PTS']]
+    espn = espn.groupby(['name', 'pos', 'espn_link', 'season']).mean().reset_index()
 
-    # Create unweighted average columns
-    # for col in ['MP', 'PTS']:
-    #     unweighted_average(df_test, col)
+    # New metric creation
+    bbref_combined['IMPACT_PLAY_RATE'] = (bbref_combined['PER100_BLK'] + bbref_combined['PER100_STL'])/bbref_combined['PER100_PF']
+
+    # Reformat join columns particularly season to YYYY-YYYY to join on
+    bbref_position_estimates['season'] = bbref_position_estimates.apply(lambda row: str(int(row['season'] - 1)) +  '-' +  str(int(row['season'])), axis=1)
+    bbref_salary['season'] = bbref_salary[bbref_salary['season'].notnull()].apply(lambda row: str(int(row['season'] - 1)) +  '-' +  str(int(row['season'])), axis=1)
+
+    # Join bbref_id onto draft table to join onto other dataframes
+    player_table = pd.read_csv('../../data/player_ids/player_table.csv')
+    player_table['draft_class'] = player_table['first_season'] - 1
+    bbref_draft = (pd.merge(player_table, bbref_draft, how='left', left_on=['player_name', 'draft_class'], right_on=['PLAYER', 'YEAR'])
+                        .rename({'AGE': 'DRAFT_AGE'}, axis=1)
+                      [['bbref_id', 'PICK', 'ROUND']])
+
+    # Join bbref_id onto espn table to join onto other dataframes
+    espn['season'] = espn.apply(lambda row: str(int(row['season'] - 1)) +  '-' +  str(int(row['season'])), axis=1)
+    espn = (pd.merge(espn, player_table, how='left', on='espn_link')
+                [['orpm', 'drpm', 'rpm', 'wins', 'bbref_id', 'season']])
+
+
+    # # Join DataFrames
+    feature_matrix = (pd.merge(bbref_combined, bbref_measurements, how='left', left_on='BBREF_ID', right_on='bbref_id', suffixes=('', '_duplicate'))
+                        .merge(bbref_percentile, how='left', on=['BBREF_ID', 'SEASON'], suffixes=('', '_duplicate'))
+                        .merge(bbref_position_percentile, how='left', on=['BBREF_ID', 'SEASON'], suffixes=('', '_duplicate'))
+                        .merge(bbref_position_estimates, how='left', left_on=['BBREF_ID', 'SEASON'], right_on=['bbref_id', 'season'], suffixes=('', '_duplicate'))
+                        .merge(bbref_salary, how='left', left_on=['BBREF_ID', 'SEASON'], right_on=['bbref_id', 'season'], suffixes=('', '_duplicate'))
+                        .merge(bbref_draft, how='left', on='bbref_id', suffixes=('', '_duplicate'))
+                        .merge(espn, how='left', on=['bbref_id', 'season'])
+                        .drop(['RANK', 'bbref_id', 'league', 'games_played', 'minutes_played', 'position_minutes', 'team_flag', 'team', 'position', 'season'], axis=1))
+    feature_matrix.drop([col for col in feature_matrix.columns if '_duplicate' in col], axis=1, inplace=True)
+
+    # Move bbref_id to front of feature matrix
+    cols = feature_matrix.columns.tolist()
+    cols.insert(0, cols.pop(cols.index('BBREF_ID')))
+    feature_matrix = feature_matrix.reindex(columns= cols)
 
     # Create weighted average columns
-    for col in ['MP', 'PTS']:
-        weighted_average(df_test, col)
+    for col in [col for col in feature_matrix.columns if col not in ['BBREF_ID', 'PLAYER', 'SEASON', 'POSITION', 'AGE',
+                                                            'TEAM', 'height', 'weight', 'height_percentile_all',
+                                                            'weight_percentile_all', 'age_percentile_all',
+                                                            'advanced_position_cluster', 'height_percentile_position',
+                                                            'weight_percentile_position', 'age_percentile_position', 'age',
+                                                            'experience', 'contract_type', 'PICK', 'ROUND']]:
+        weighted_average(feature_matrix, col)
+
+
+
+
+    # Write out feature matrix
+    feature_matrix.to_csv('feature_matrix/feature_matrix.csv', index=False)
