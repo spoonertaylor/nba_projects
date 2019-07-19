@@ -660,5 +660,9 @@ def metrics_to_averages(df, weighted=True):
 if __name__=='__main__':
     # Join all data sources to target variable
     model_input = create_model_input(['bbref_box_score', 'bbref_measurements', 'bbref_league_percentile', 'bbref_position_percentile', 'bbref_position_estimates', 'bbref_salary', 'espn_advance'])
+
     # Transform all season-level statistics to weighted three-season averages
     model_input_3WAVG = metrics_to_averages(model_input)
+
+    # model_input = create_model_input(['bbref_box_score'])
+    # model_input.to_csv('../feature_selection/features/bbref_box_scores.csv', index=False)
