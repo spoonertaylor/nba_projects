@@ -3,10 +3,13 @@
 # variables and the player projection target variable. Determine best subset
 # of predictors to use in the model.
 # Data Sources: Basketball-Reference and ESPN
-# Last Updated: 7/18/2019
+# Last Updated: 7/19/2019
 
 import numpy as np
 import pandas as pd
+import imgkit
+import random
+import os
 
 def calculate_target_correlations(df, target):
     # Calculate pearson correlation of all numerical metrics in df
@@ -51,11 +54,39 @@ def calculate_target_correlations(df, target):
 
     return corr_df
 
-# Correlation Table
-# Correlation Matrix
-# LR Coefficients
-# Dependency Plots
-# Drop-One Importance (eli5)
+def dataFrame_to_image(data, css, outputfile="corr_df.png", format="png"):
+    '''
+    Render a Pandas DataFrame as an image. Adopted from :
+    https://medium.com/@andy.lane/convert-pandas-dataframes-to-images-using-imgkit-5da7e5108d55
+
+    Args:
+        data: a pandas DataFrame
+        css: a string containing rules for styling the output table. This must
+             contain both the opening an closing <style> tags.
+    Return:
+        *outputimage: filename for saving of generated image
+        *format: output format, as supported by IMGKit. Default is "png"
+    '''
+    fn = str(random.random()*100000000).split(".")[0] + ".html"
+
+    try:
+        os.remove(fn)
+    except:
+        None
+    text_file = open(fn, "a")
+
+    # write the CSS
+    text_file.write(css)
+    # write the HTML-ized Pandas DataFrame
+    text_file.write(data.to_html(index=False))
+    text_file.close()
+
+    # See IMGKit options for full configuration,
+    # e.g. cropping of final image
+    imgkitoptions = {"format": format}
+
+    imgkit.from_file(fn, outputfile, options=imgkitoptions)
+    os.remove(fn)
 
 
 if __name__=='__main__':
@@ -66,4 +97,44 @@ if __name__=='__main__':
                         .drop(['BLEND', 'SEASON_PLUS_2', 'SEASON_PLUS_3',
                                'SEASON_PLUS_4', 'SEASON_PLUS_5'], axis=1))
 
+    # Calculate predictor correlations with target variable
     corr_df = calculate_target_correlations(bbref_box_score, 'SEASON_PLUS_1')
+
+    # Save .png of correlations with background gradient
+    styled_table = (corr_df[['STATISTIC', 'PEARSON_CORRELATION', 'SPEARMAN_CORRELATION', 'AVERAGE_RANK']]
+                     .style
+                     .hide_index()
+                    #  .background_gradient(subset=['PEARSON_CORRELATION', 'SPEARMAN_CORRELATION'], cmap='RdBu_r')
+                     .background_gradient(subset=['AVERAGE_RANK'], cmap='RdBu'))
+    html = styled_table.render()
+    imgkit.from_string(html, 'plots/correlation_table_gradient.png')
+
+    # Save .png of correlations w/o background gradient
+    css = """
+        <style type=\"text/css\">
+        table {
+        color: #333;
+        font-family: Helvetica, Arial, sans-serif;
+        width: 640px;
+        border-collapse:
+        collapse;
+        border-spacing: 0;
+        }
+        td, th {
+        border: 1px solid transparent; /* No more visible border */
+        height: 30px;
+        }
+        th {
+        background: #DFDFDF; /* Darken header a bit */
+        font-weight: bold;
+        }
+        td {
+        background: #FAFAFA;
+        text-align: center;
+        }
+        table tr:nth-child(odd) td{
+        background-color: white;
+        }
+        </style>
+        """
+    dataFrame_to_image(corr_df, css, outputfile="plots/correlation_table.png", format="png")
