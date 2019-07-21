@@ -30,7 +30,7 @@ df = left_join(positions, measurements, by = 'bbref_id') %>% inner_join(players 
 df = left_join(df, advanced_data, by = c('bbref_id', 'season'))
 
 # * Clustering ----
-df2 = df %>% filter(season >= 2005) %>% replace(., is.na(.), 0)
+df2 = df %>% filter(season >= 2004) %>% replace(., is.na(.), 0)
 df_scale = scale(df2 %>%
             select(prop_pg, prop_sf, prop_c, height, weight,
                                three_point_rate, ORB_perc, DRB_perc, AST_perc, BLK_perc,
@@ -38,7 +38,7 @@ df_scale = scale(df2 %>%
 
 clusters = kmeans(df_scale, 3, nstart = 50)
 positions$advanced_position_cluster = NA
-positions[positions$season >= 2005, 'advanced_position_cluster'] = as.factor(clusters$cluster)
+positions[positions$season >= 2004, 'advanced_position_cluster'] = as.factor(clusters$cluster)
 positions = positions %>% mutate(advanced_position_cluster = case_when(
   advanced_position_cluster == 1 ~ 'Big',
   advanced_position_cluster == 2 ~ 'Wing',
@@ -46,7 +46,7 @@ positions = positions %>% mutate(advanced_position_cluster = case_when(
 ))
 
 # * Plotting ----
-ggplot(df2, aes(x = three_point_rate, y = AST_perc, color = cluster))+ geom_point()
+ggplot(positions, aes(x = three_point_rate, y = AST_perc, color = cluster))+ geom_point()
 
 ggplot(df2, aes(x = factor(position_minutes, levels = c('PG', 'SG', 'SF', 'PF', 'C')))) +
   geom_bar(aes(fill = cluster), position = 'fill') + xlab("") + theme_minimal() +
