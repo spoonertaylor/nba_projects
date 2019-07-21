@@ -8,8 +8,11 @@
 import numpy as np
 import pandas as pd
 import imgkit
-import random
-import os
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
 
 def calculate_target_correlations(df, target):
     # Calculate pearson correlation of all numerical metrics in df
@@ -54,39 +57,61 @@ def calculate_target_correlations(df, target):
 
     return corr_df
 
-def dataFrame_to_image(data, css, outputfile="corr_df.png", format="png"):
-    '''
-    Render a Pandas DataFrame as an image. Adopted from :
-    https://medium.com/@andy.lane/convert-pandas-dataframes-to-images-using-imgkit-5da7e5108d55
-
+def plot_correlation_matrix(df, title):
+    """
+    Plot correlation matrix of top-15 features that are most correlated with
+    NBA_VORP
     Args:
-        data: a pandas DataFrame
-        css: a string containing rules for styling the output table. This must
-             contain both the opening an closing <style> tags.
-    Return:
-        *outputimage: filename for saving of generated image
-        *format: output format, as supported by IMGKit. Default is "png"
-    '''
-    fn = str(random.random()*100000000).split(".")[0] + ".html"
+        df: cleaned training dataframe
+    Returns:
+        Plotted correlation matrix of top-15 features that are most correlated
+        with NBA_VORP
+    """
+    corr = df.corr()
+    mask = np.zeros_like(corr, dtype=np.bool)
+    mask[np.triu_indices_from(mask)] = True
+    f, ax = plt.subplots(figsize=(12,8))
+    cmap = sns.color_palette('coolwarm')
+    sns.heatmap(corr, mask=mask, cmap=cmap, center=0, square=True, linewidths=.5,
+                yticklabels=True, annot=True, fmt='.2f', cbar_kws={'shrink':.5},
+                annot_kws={"size": 7})
+    plt.title(title)
+    plt.xticks(rotation=90, fontsize=7)
+    plt.yticks(rotation=0, fontsize=7)
+    plt.tight_layout()
+    plt.show()
 
-    try:
-        os.remove(fn)
-    except:
-        None
-    text_file = open(fn, "a")
+def permutation_importance(df, target, predictors):
+    # Train/Test Split
+    df_train, df_test = train_test_split(df, test_size=0.2)
+    X_train, y_train = df_train[predictors], df_train['SEASON_PLUS_1']
+    X_test, y_test = df_test[predictors], df_test['SEASON_PLUS_1']
 
-    # write the CSS
-    text_file.write(css)
-    # write the HTML-ized Pandas DataFrame
-    text_file.write(data.to_html(index=False))
-    text_file.close()
+    # Add random column
+    X_train['RANDOM'] = np.random.random(size=len(X_train))
+    X_test['RANDOM'] = np.random.random(size=len(X_test))
+    predictors.append('RANDOM')
 
-    # See IMGKit options for full configuration,
-    # e.g. cropping of final image
-    imgkitoptions = {"format": format}
+    # Fit and score baseline model
+    rf = RandomForestRegressor()
+    rf.fit(X_train, y_train)
+    y_pred = rf.predict(X_test)
+    baseline_score = np.sqrt(mean_squared_error(y_test, y_pred))
 
-    imgkit.from_file(fn, outputfile, options=imgkitoptions)
-    os.remove(fn)
+    scores = {}
+    # Loop through columns, randomizing each and re-scoring model
+    for col in predictors:
+        temp_df = X_test.copy()
+        temp_df[[col]] = np.random.permutation(temp_df[[col]].values)
+        y_pred = rf.predict(temp_df)
+        scores[col] = round(np.sqrt(mean_squared_error(y_test, y_pred)), 4)
+
+    scores_df = pd.DataFrame.from_dict(scores, orient='index')\
+                            .reset_index()
+    scores_df['baseline_diff'] = round(scores_df[0] - baseline_score, 4)
+    scores_df.columns = ['FIELD', 'RMSE', 'BASELINE_DIFFERENCE']
+    scores_df.sort_values(by='BASELINE_DIFFERENCE', ascending=False, inplace=True)
+    return scores_df
 
 
 if __name__=='__main__':
@@ -97,44 +122,67 @@ if __name__=='__main__':
                         .drop(['BLEND', 'SEASON_PLUS_2', 'SEASON_PLUS_3',
                                'SEASON_PLUS_4', 'SEASON_PLUS_5'], axis=1))
 
+
     # Calculate predictor correlations with target variable
     corr_df = calculate_target_correlations(bbref_box_score, 'SEASON_PLUS_1')
 
-    # Save .png of correlations with background gradient
+    # # Save .png of correlations with background gradient
     styled_table = (corr_df[['STATISTIC', 'PEARSON_CORRELATION', 'SPEARMAN_CORRELATION', 'AVERAGE_RANK']]
                      .style
+                     .set_table_styles(
+                    [{'selector': 'tr:nth-of-type(odd)',
+                      'props': [('background', '#eee')]},
+                     {'selector': 'tr:nth-of-type(even)',
+                      'props': [('background', 'white')]},
+                     {'selector':'th, td', 'props':[('text-align', 'center')]}])
+                     .set_properties(subset=['STATISTIC'], **{'text-align': 'left'})
                      .hide_index()
-                    #  .background_gradient(subset=['PEARSON_CORRELATION', 'SPEARMAN_CORRELATION'], cmap='RdBu_r')
                      .background_gradient(subset=['AVERAGE_RANK'], cmap='RdBu'))
     html = styled_table.render()
-    imgkit.from_string(html, 'plots/correlation_table_gradient.png')
+    imgkit.from_string(html, 'plots/correlation_table.png', {'width': 1})
 
-    # Save .png of correlations w/o background gradient
-    css = """
-        <style type=\"text/css\">
-        table {
-        color: #333;
-        font-family: Helvetica, Arial, sans-serif;
-        width: 640px;
-        border-collapse:
-        collapse;
-        border-spacing: 0;
-        }
-        td, th {
-        border: 1px solid transparent; /* No more visible border */
-        height: 30px;
-        }
-        th {
-        background: #DFDFDF; /* Darken header a bit */
-        font-weight: bold;
-        }
-        td {
-        background: #FAFAFA;
-        text-align: center;
-        }
-        table tr:nth-child(odd) td{
-        background-color: white;
-        }
-        </style>
-        """
-    dataFrame_to_image(corr_df, css, outputfile="plots/correlation_table.png", format="png")
+    plot_correlation_matrix(bbref_box_score[['SEASON_PLUS_1', 'G', 'GS', 'MP',
+                                                'FG', 'FGA', 'FG%', '3P', '3PA',
+                                                '3P%', '2P','2PA', '2P%', 'EFG%',
+                                                'FT', 'FTA', 'FT%', 'ORB', 'DRB',
+                                                'TRB', 'AST', 'STL', 'BLK', 'TOV',
+                                                'PF', 'PTS']], 'Totals Correlation Matrix')
+
+    plot_correlation_matrix(bbref_box_score[['SEASON_PLUS_1', 'PER100_FG', 'PER100_FGA',
+       'PER100_FG%', 'PER100_3P', 'PER100_3PA', 'PER100_3P%', 'PER100_2P',
+       'PER100_2PA', 'PER100_2P%', 'PER100_FT', 'PER100_FTA', 'PER100_FT%',
+       'PER100_ORB', 'PER100_DRB', 'PER100_TRB', 'PER100_AST', 'PER100_STL',
+       'PER100_BLK', 'PER100_TOV', 'PER100_PF', 'PER100_PTS', 'PER100_ORTG',
+       'PER100_DRTG']], 'Per 100 Possessions Correlation Matrix')
+
+    plot_correlation_matrix(bbref_box_score[['SEASON_PLUS_1', 'PER', 'TS%', '3PA_RATE', 'FT_RATE',
+                                            'ORB%', 'DRB%', 'TRB%', 'AST%', 'STL%',
+                                            'BLK%', 'TOV%', 'USG%', 'OWS', 'DWS', 'WS',
+                                            'WS/48', 'OBPM', 'DBPM', 'BPM', 'VORP']],
+                                            'Advanced Correlation Matrix')
+
+    # Drop-One Feature Importance
+    predictors = ['G', 'GS', 'MP', 'FG', 'FGA', 'FG%', '3P', '3PA', '3P%', '2P',
+       '2PA', '2P%', 'EFG%', 'FT', 'FTA', 'FT%', 'ORB', 'DRB', 'TRB', 'AST',
+       'STL', 'BLK', 'TOV', 'PF', 'PTS', 'PER100_FG', 'PER100_FGA',
+       'PER100_FG%', 'PER100_3P', 'PER100_3PA', 'PER100_3P%', 'PER100_2P',
+       'PER100_2PA', 'PER100_2P%', 'PER100_FT', 'PER100_FTA', 'PER100_FT%',
+       'PER100_ORB', 'PER100_DRB', 'PER100_TRB', 'PER100_AST', 'PER100_STL',
+       'PER100_BLK', 'PER100_TOV', 'PER100_PF', 'PER100_PTS', 'PER100_ORTG',
+       'PER100_DRTG', 'PER', 'TS%', '3PA_RATE', 'FT_RATE', 'ORB%', 'DRB%',
+       'TRB%', 'AST%', 'STL%', 'BLK%', 'TOV%', 'USG%', 'OWS', 'DWS', 'WS',
+       'WS/48', 'OBPM', 'DBPM', 'BPM', 'VORP']
+    scores = permutation_importance(bbref_box_score, 'SEASON_PLUS_1', predictors)
+    styled_scores = (scores
+                     .style
+                     .set_table_styles(
+                     [{'selector': 'tr:nth-of-type(odd)',
+                       'props': [('background', '#eee')]},
+                      {'selector': 'tr:nth-of-type(even)',
+                       'props': [('background', 'white')]},
+                      {'selector':'th, td', 'props':[('text-align', 'center')]}])
+                     .set_properties(subset=['FIELD'], **{'text-align': 'left'})
+                     .hide_index()
+                     .background_gradient(subset=['BASELINE_DIFFERENCE'], cmap='Reds'))
+    html = styled_scores.render()
+    imgkit.from_string(html, 'plots/permutation_importance.png', {'width': 1})
