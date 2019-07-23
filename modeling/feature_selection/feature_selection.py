@@ -117,16 +117,20 @@ def permutation_importance(df, target, predictors):
 if __name__=='__main__':
     # Read in featurized Basketball-Reference Box Score Data
     bbref_box_score = pd.read_csv('featurized_inputs/bbref_box_scores.csv')
-    # Filter to SEASON_PLUS_1 target variable and drop other targets
+    # Filter to SEASON_PLUS_1 target variable
+    # Drop other target variables and raw total columns
     bbref_box_score = (bbref_box_score[bbref_box_score['SEASON_PLUS_1'].notnull()]
                         .drop(['BLEND', 'SEASON_PLUS_2', 'SEASON_PLUS_3',
-                               'SEASON_PLUS_4', 'SEASON_PLUS_5'], axis=1))
-
+                               'SEASON_PLUS_4', 'SEASON_PLUS_5', 'TEAM',
+                               'G', 'GS', 'FG', 'FGA', 'FG%', '3P',
+                               '3PA', '3P%', '2P', '2PA', '2P%', 'FT', 'FTA',
+                               'FT%', 'ORB', 'DRB', 'TRB', 'AST', 'STL', 'BLK',
+                               'TOV', 'PF', 'PTS'], axis=1))
 
     # Calculate predictor correlations with target variable
     corr_df = calculate_target_correlations(bbref_box_score, 'SEASON_PLUS_1')
 
-    # # Save .png of correlations with background gradient
+    # Save .png of correlations with background gradient
     styled_table = (corr_df[['STATISTIC', 'PEARSON_CORRELATION', 'SPEARMAN_CORRELATION', 'AVERAGE_RANK']]
                      .style
                      .set_table_styles(
@@ -140,13 +144,6 @@ if __name__=='__main__':
                      .background_gradient(subset=['AVERAGE_RANK'], cmap='RdBu'))
     html = styled_table.render()
     imgkit.from_string(html, 'plots/correlation_table.png', {'width': 1})
-
-    plot_correlation_matrix(bbref_box_score[['SEASON_PLUS_1', 'G', 'GS', 'MP',
-                                                'FG', 'FGA', 'FG%', '3P', '3PA',
-                                                '3P%', '2P','2PA', '2P%', 'EFG%',
-                                                'FT', 'FTA', 'FT%', 'ORB', 'DRB',
-                                                'TRB', 'AST', 'STL', 'BLK', 'TOV',
-                                                'PF', 'PTS']], 'Totals Correlation Matrix')
 
     plot_correlation_matrix(bbref_box_score[['SEASON_PLUS_1', 'PER100_FG', 'PER100_FGA',
        'PER100_FG%', 'PER100_3P', 'PER100_3PA', 'PER100_3P%', 'PER100_2P',
@@ -162,9 +159,7 @@ if __name__=='__main__':
                                             'Advanced Correlation Matrix')
 
     # Drop-One Feature Importance
-    predictors = ['G', 'GS', 'MP', 'FG', 'FGA', 'FG%', '3P', '3PA', '3P%', '2P',
-       '2PA', '2P%', 'EFG%', 'FT', 'FTA', 'FT%', 'ORB', 'DRB', 'TRB', 'AST',
-       'STL', 'BLK', 'TOV', 'PF', 'PTS', 'PER100_FG', 'PER100_FGA',
+    predictors = ['EFG%', 'PER100_FG', 'PER100_FGA',
        'PER100_FG%', 'PER100_3P', 'PER100_3PA', 'PER100_3P%', 'PER100_2P',
        'PER100_2PA', 'PER100_2P%', 'PER100_FT', 'PER100_FTA', 'PER100_FT%',
        'PER100_ORB', 'PER100_DRB', 'PER100_TRB', 'PER100_AST', 'PER100_STL',
@@ -185,4 +180,47 @@ if __name__=='__main__':
                      .hide_index()
                      .background_gradient(subset=['BASELINE_DIFFERENCE'], cmap='Reds'))
     html = styled_scores.render()
+    imgkit.from_string(html, 'plots/permutation_importance_advanced.png', {'width': 1})
+
+    # Drop-One Feature Importance (Advanced Metrics Removed)
+    predictors = ['EFG%', 'PER100_FG', 'PER100_FGA',
+       'PER100_FG%', 'PER100_3P', 'PER100_3PA', 'PER100_3P%', 'PER100_2P',
+       'PER100_2PA', 'PER100_2P%', 'PER100_FT', 'PER100_FTA', 'PER100_FT%',
+       'PER100_ORB', 'PER100_DRB', 'PER100_TRB', 'PER100_AST', 'PER100_STL',
+       'PER100_BLK', 'PER100_TOV', 'PER100_PF', 'PER100_PTS', 'PER100_ORTG',
+       'PER100_DRTG', 'TS%', '3PA_RATE', 'FT_RATE', 'ORB%', 'DRB%',
+       'TRB%', 'AST%', 'STL%', 'BLK%', 'TOV%', 'USG%']
+    scores = permutation_importance(bbref_box_score, 'SEASON_PLUS_1', predictors)
+    styled_scores = (scores
+                     .style
+                     .set_table_styles(
+                     [{'selector': 'tr:nth-of-type(odd)',
+                       'props': [('background', '#eee')]},
+                      {'selector': 'tr:nth-of-type(even)',
+                       'props': [('background', 'white')]},
+                      {'selector':'th, td', 'props':[('text-align', 'center')]}])
+                     .set_properties(subset=['FIELD'], **{'text-align': 'left'})
+                     .hide_index()
+                     .background_gradient(subset=['BASELINE_DIFFERENCE'], cmap='Reds'))
+    html = styled_scores.render()
     imgkit.from_string(html, 'plots/permutation_importance.png', {'width': 1})
+
+    # Partial Dependence Plots (Curated List of Features)
+    from sklearn.ensemble import GradientBoostingRegressor
+    from sklearn.ensemble.partial_dependence import plot_partial_dependence
+
+    # Plotting Style
+    plt.style.use('fivethirtyeight')
+
+    features = ['MP', 'TS%', 'PER100_3PA', 'PER100_FTA', 'PER100_ORTG', 'PER100_DRTG', 'PER100_AST', 'PER100_STL', 'PER100_BLK', 'PER100_ORB']
+
+    gb = GradientBoostingRegressor()
+    gb.fit(bbref_box_score[features], bbref_box_score['SEASON_PLUS_1'])
+    fig, ax = plot_partial_dependence(gb, bbref_box_score[features], [0, 1, 2, 3, 4, 5], feature_names=features, figsize=(15, 8))
+    plt.suptitle('Partial Dependence Plots (Curated Features)')
+    plt.tight_layout()
+    plt.show()
+
+    fig, ax = plot_partial_dependence(gb, bbref_box_score[features], [6, 7, 8, 9], feature_names=features, figsize=(15, 8))
+    plt.tight_layout()
+    plt.show()
