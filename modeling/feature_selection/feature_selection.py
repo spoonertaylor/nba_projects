@@ -205,22 +205,32 @@ if __name__=='__main__':
     html = styled_scores.render()
     imgkit.from_string(html, 'plots/permutation_importance.png', {'width': 1})
 
-    # Partial Dependence Plots (Curated List of Features)
+    # Partial Dependence Plots
     from sklearn.ensemble import GradientBoostingRegressor
     from sklearn.ensemble.partial_dependence import plot_partial_dependence
 
     # Plotting Style
     plt.style.use('fivethirtyeight')
 
-    features = ['MP', 'TS%', 'PER100_3PA', 'PER100_FTA', 'PER100_ORTG', 'PER100_DRTG', 'PER100_AST', 'PER100_STL', 'PER100_BLK', 'PER100_ORB']
+    # List of curated feautres to examine independently
+    curated_features = ['MP', 'TS%', 'PER100_3PA', 'PER100_FTA', 'PER100_ORTG', 'PER100_DRTG', 'PER100_AST', 'PER100_STL', 'PER100_BLK', 'PER100_ORB']
+    for feature in curated_features:
+        features = [feature]
+        gb = GradientBoostingRegressor()
+        gb.fit(bbref_box_score[features], bbref_box_score['SEASON_PLUS_1'])
+        fig, ax = plot_partial_dependence(gb, bbref_box_score[features], [0], feature_names=features, figsize=(8, 4))
+        plt.suptitle('{0} Partial Dependence Plot'.format(features[0]))
+        plt.tight_layout()
+        plt.show()
 
+    # Partial Dependence plot of model built on entire curated_features list
     gb = GradientBoostingRegressor()
-    gb.fit(bbref_box_score[features], bbref_box_score['SEASON_PLUS_1'])
-    fig, ax = plot_partial_dependence(gb, bbref_box_score[features], [0, 1, 2, 3, 4, 5], feature_names=features, figsize=(15, 8))
+    gb.fit(bbref_box_score[curated_features], bbref_box_score['SEASON_PLUS_1'])
+    fig, ax = plot_partial_dependence(gb, bbref_box_score[curated_features], [0, 1, 2, 3, 4, 5], feature_names=curated_features, figsize=(15, 8))
     plt.suptitle('Partial Dependence Plots (Curated Features)')
     plt.tight_layout()
     plt.show()
 
-    fig, ax = plot_partial_dependence(gb, bbref_box_score[features], [6, 7, 8, 9], feature_names=features, figsize=(15, 8))
+    fig, ax = plot_partial_dependence(gb, bbref_box_score[curated_features], [6, 7, 8, 9], feature_names=curated_features, figsize=(15, 8))
     plt.tight_layout()
     plt.show()
