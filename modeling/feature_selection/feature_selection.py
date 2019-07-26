@@ -3,7 +3,7 @@
 # variables and the player projection target variable. Determine best subset
 # of predictors to use in the model.
 # Data Sources: Basketball-Reference and ESPN
-# Last Updated: 7/19/2019
+# Last Updated: 7/25/2019
 
 import numpy as np
 import pandas as pd
@@ -11,10 +11,28 @@ import imgkit
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
+from sklearn.ensemble.partial_dependence import plot_partial_dependence
+
+# Plotting Style
+plt.style.use('fivethirtyeight')
 
 def calculate_target_correlations(df, target):
+    """
+    Calculate pearson and spearman correlations between each feature and
+    a target variable. Resulting dataframe is in rank order of most to
+    least correlated.
+
+    Args:
+        df: pandas DataFrame contaning features and target variable.
+        target (string): Name of target variable to which all correlations
+        are calculated.
+
+    Returns:
+        corr_df: pandas Dataframe with rank order of features from most to
+        least correlated with the target variable.
+    """
     # Calculate pearson correlation of all numerical metrics in df
     pearson_corr_df = df.corr(method='pearson')
     # Select only correlations with target variable
@@ -59,17 +77,21 @@ def calculate_target_correlations(df, target):
 
 def plot_correlation_matrix(df, title):
     """
-    Plot correlation matrix of top-15 features that are most correlated with
-    NBA_VORP
+    Plot correlation matrix of features within the inputted dataframe.
+
     Args:
-        df: cleaned training dataframe
+        df: pandas DataFrame
+        title (string): Title to add to the resulting plot
+
     Returns:
-        Plotted correlation matrix of top-15 features that are most correlated
-        with NBA_VORP
+        Plotted correlation matrix of all features.
     """
+    # Calculate correlations
     corr = df.corr()
+    # Remove duplicate upper right section of the correlation matrix
     mask = np.zeros_like(corr, dtype=np.bool)
     mask[np.triu_indices_from(mask)] = True
+    # Plot correlation matrix
     f, ax = plt.subplots(figsize=(12,8))
     cmap = sns.color_palette('coolwarm')
     sns.heatmap(corr, mask=mask, cmap=cmap, center=0, square=True, linewidths=.5,
@@ -82,6 +104,20 @@ def plot_correlation_matrix(df, title):
     plt.show()
 
 def permutation_importance(df, target, predictors):
+    """
+    Calculate permutation importance by fitting a baseline model and then
+    scoring the model with individual features randomly shuffled to determine
+    the increase in the overall error metric.
+
+    Args:
+        df: pandas DataFrame contaning features and target variable
+        target (string): Name of target variable in the model
+        predictors (list): List of features to use as predictors in the model
+
+    Returns:
+        scores_df: pandas Dataframe with rank order of features from most to
+        least predictive based on permutation importance.
+    """
     # Train/Test Split
     df_train, df_test = train_test_split(df, test_size=0.2)
     X_train, y_train = df_train[predictors], df_train['SEASON_PLUS_1']
@@ -108,6 +144,8 @@ def permutation_importance(df, target, predictors):
 
     scores_df = pd.DataFrame.from_dict(scores, orient='index')\
                             .reset_index()
+    # Calcukate difference in model error rmse between baseline model and
+    # re-scored model
     scores_df['baseline_diff'] = round(scores_df[0] - baseline_score, 4)
     scores_df.columns = ['FIELD', 'RMSE', 'BASELINE_DIFFERENCE']
     scores_df.sort_values(by='BASELINE_DIFFERENCE', ascending=False, inplace=True)
@@ -145,6 +183,7 @@ if __name__=='__main__':
     html = styled_table.render()
     imgkit.from_string(html, 'plots/correlation_table.png', {'width': 1})
 
+    # Plot correlation matrix of per 100 possession data
     plot_correlation_matrix(bbref_box_score[['SEASON_PLUS_1', 'PER100_FG', 'PER100_FGA',
        'PER100_FG%', 'PER100_3P', 'PER100_3PA', 'PER100_3P%', 'PER100_2P',
        'PER100_2PA', 'PER100_2P%', 'PER100_FT', 'PER100_FTA', 'PER100_FT%',
@@ -152,6 +191,7 @@ if __name__=='__main__':
        'PER100_BLK', 'PER100_TOV', 'PER100_PF', 'PER100_PTS', 'PER100_ORTG',
        'PER100_DRTG']], 'Per 100 Possessions Correlation Matrix')
 
+    # Plot correlation matrix of advanced metrics
     plot_correlation_matrix(bbref_box_score[['SEASON_PLUS_1', 'PER', 'TS%', '3PA_RATE', 'FT_RATE',
                                             'ORB%', 'DRB%', 'TRB%', 'AST%', 'STL%',
                                             'BLK%', 'TOV%', 'USG%', 'OWS', 'DWS', 'WS',
@@ -206,12 +246,6 @@ if __name__=='__main__':
     imgkit.from_string(html, 'plots/permutation_importance.png', {'width': 1})
 
     # Partial Dependence Plots
-    from sklearn.ensemble import GradientBoostingRegressor
-    from sklearn.ensemble.partial_dependence import plot_partial_dependence
-
-    # Plotting Style
-    plt.style.use('fivethirtyeight')
-
     # List of curated feautres to examine independently
     curated_features = ['MP', 'TS%', 'PER100_3PA', 'PER100_FTA', 'PER100_ORTG', 'PER100_DRTG', 'PER100_AST', 'PER100_STL', 'PER100_BLK', 'PER100_ORB']
     for feature in curated_features:
