@@ -1,11 +1,12 @@
 # Project: Player Projection Model (Chris)
-# Description: Build model(s) to predict a player's RPM/BPM blend one season in the
+# Description: Build model to predict a player's RPM/BPM blend one season in the
 # future. Investigate feature importances.
 # Data Sources: Basketball-Reference and ESPN
 # Last Updated: 7/28/2019
 
 import numpy as np
 import pandas as pd
+import pickle
 import imgkit
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split, GridSearchCV, KFold, cross_val_score
@@ -17,9 +18,11 @@ from sklearn.metrics import mean_squared_error
 # Plotting Style
 plt.style.use('fivethirtyeight')
 
+# Supress various warnings. ConvergenceWarning won't work when gradient boosting
+# is run in parallel.
 import warnings
 from sklearn.exceptions import DataConversionWarning, ConvergenceWarning
-# warnings.filterwarnings(action='ignore', category=DataConversionWarning)
+warnings.filterwarnings(action='ignore', category=DataConversionWarning)
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -107,6 +110,7 @@ if __name__=='__main__':
     plot_cross_validation(X_train, y_train, models, 'neg_mean_squared_error')
 
     # Gridsearch Ridge Model
+    # (Best performing regularized regression model in CV process above)
     ridge = Ridge()
     param_list = {'alpha': np.arange(0.5, 5, 0.1),
                   'tol': np.arange(0.00001, 0.1, 0.001),
@@ -121,6 +125,7 @@ if __name__=='__main__':
     # Best Score: 1.8190340847310862
 
     # Gridsearch Gradient Boosted Model
+    # (Best performing model overall in CV process above)
     gb = GradientBoostingRegressor()
     param_list = {'loss': ['ls', 'lad', 'huber', 'quantile'],
                   'learning_rate':np.arange(0.1, 1.0, 0.2),
@@ -142,14 +147,15 @@ if __name__=='__main__':
     print('Test RMSE Score: {}'.format(np.sqrt(mean_squared_error(y_test, y_pred))))
     # Test RMSE Score: 1.95
 
-    # Examine Coefficients
+    # Create table of coefficients from final ridge model to examine feature
+    # importance.
     coefs = list(final_ridge.coef_)
     features = list(X.columns)
     importances = [[x, y] for x, y in zip(features, coefs)]
     importances.sort(key=lambda row: abs(row[1]), reverse=True)
     feature_importances = pd.DataFrame(importances)
     feature_importances.columns = ['FEATURE', 'COEFFICIENT']
-
+    # Save table in pandas styling format
     styled_feature_importances = (feature_importances
                      .style
                      .set_table_styles(
@@ -162,7 +168,7 @@ if __name__=='__main__':
                      .hide_index()
                      .background_gradient(subset=['COEFFICIENT'], cmap='Reds'))
     html = styled_feature_importances.render()
-    imgkit.from_string(html, 'feature_importance.png', {'width': 1})
+    imgkit.from_string(html, 'plots/feature_importance.png', {'width': 1})
 
     # Make Predictions on Final Gradient Boosted Model
     final_gb = GradientBoostingRegressor(learning_rate=0.1,
@@ -171,9 +177,12 @@ if __name__=='__main__':
                                          n_estimators=110,
                                          warm_start=True)
     final_gb.fit(X_train, y_train)
+    # Save model to pickle file
+    # Can load same model via `loaded_model = pickle.load(open(filename, 'rb'))`
+    pickle.dump(final_gb, open('model/chris_player_projection_model.sav', 'wb'))
     y_pred = final_gb.predict(X_test)
     print('Test RMSE Score: {}'.format(np.sqrt(mean_squared_error(y_test, y_pred))))
-    # Test RMSE Score: 1.8995852258554258
+    # Test RMSE Score: 1.8997970102036106
 
     # Make predictions for 2019-2020 season
     most_recent_season = pd.read_csv('../feature_selection/featurized_inputs/bbref_box_scores.csv')
@@ -186,6 +195,7 @@ if __name__=='__main__':
        'PER', 'TS%', '3PA_RATE', 'FT_RATE', 'ORB%', 'DRB%', 'TRB%', 'AST%',
        'STL%', 'BLK%', 'TOV%', 'USG%', 'OWS', 'DWS', 'WS', 'WS/48', 'OBPM',
        'DBPM', 'BPM', 'VORP']]
+    # Scale data
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
     season_plus1_predictions = final_gb.predict(X)
@@ -193,8 +203,9 @@ if __name__=='__main__':
     most_recent_season.sort_values(by='PREDICTION',
                                       ascending=False, inplace=True)
     most_recent_season = most_recent_season[['BBREF_ID', 'PLAYER', 'AGE', 'SEASON', 'ADVANCED_POSITION_CLUSTER', 'PREDICTION']]
-    most_recent_season.to_csv('predictions.csv', index=False)
-
+    # Save full predictions table
+    most_recent_season.to_csv('predictions/predictions.csv', index=False)
+    # Save top-25 predictions table in pandas styling format
     styled_top25 = (most_recent_season.iloc[0:25, 1:]
                      .style
                      .set_table_styles(
@@ -212,8 +223,9 @@ if __name__=='__main__':
                      .hide_index()
                      .background_gradient(subset=['PREDICTION'], cmap='Reds'))
     html = styled_top25.render()
-    imgkit.from_string(html, 'top_25predictions.png', {'width': 1})
+    imgkit.from_string(html, 'plots/top_25predictions.png', {'width': 1})
 
+    # Save bottom-25 predictions table in pandas styling format
     styled_bottom25 = (most_recent_season.iloc[-25:, 1:]
                      .style
                      .set_table_styles(
@@ -231,4 +243,4 @@ if __name__=='__main__':
                      .hide_index()
                      .background_gradient(subset=['PREDICTION'], cmap='Blues_r'))
     html = styled_bottom25.render()
-    imgkit.from_string(html, 'bottom_25predictions.png', {'width': 1})
+    imgkit.from_string(html, 'plots/bottom_25predictions.png', {'width': 1})
