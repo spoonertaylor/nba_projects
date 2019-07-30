@@ -101,14 +101,14 @@ def create_model_input(data_source_list):
         all nulls imputed.
     """
     # Dictionary of data source paths
-    data_source_dict = {'targets': '../../data/nba/modeling_targets/modeling_targets.csv',
-                        'bbref_box_score': '../../data/nba/basketball_reference/player_data/combined/bbref_player_data.csv',
-                        'bbref_measurements': '../../data/nba/basketball_reference/player_data/measurements/player_measurements.csv',
-                        'bbref_league_percentile': '../../data/nba/basketball_reference/player_data/percentile/nba_percentile_all.csv',
-                        'bbref_position_percentile': '../../data/nba/basketball_reference/player_data/percentile/nba_percentile_position.csv',
-                        'bbref_position_estimates': '../../data/nba/basketball_reference/player_data/positional_estimates/player_position_estimates.csv',
-                        'bbref_salary': '../../data/nba/basketball_reference/player_data/salary/salary_info.csv',
-                        'espn_advance': '../../data/nba/espn/espn_nba_rpm.csv'}
+    data_source_dict = {'targets': '../../../../data/nba/modeling_targets/modeling_targets.csv',
+                        'bbref_box_score': '../../../../data/nba/basketball_reference/player_data/combined/bbref_player_data.csv',
+                        'bbref_measurements': '../../../../data/nba/basketball_reference/player_data/measurements/player_measurements.csv',
+                        'bbref_league_percentile': '../../../../data/nba/basketball_reference/player_data/percentile/nba_percentile_all.csv',
+                        'bbref_position_percentile': '../../../../data/nba/basketball_reference/player_data/percentile/nba_percentile_position.csv',
+                        'bbref_position_estimates': '../../../../data/nba/basketball_reference/player_data/positional_estimates/player_position_estimates.csv',
+                        'bbref_salary': '../../../../data/nba/basketball_reference/player_data/salary/salary_info.csv',
+                        'espn_advance': '../../../../data/nba/espn/espn_nba_rpm.csv'}
 
     # Read in Targets and reformat season to YYYY-YYYY
     targets = pd.read_csv(data_source_dict['targets'])
@@ -193,7 +193,7 @@ def create_model_input(data_source_list):
                                     .mean()
                                     .reset_index())
         # Join bbref_id onto espn table to join onto other dataframes
-        player_table = pd.read_csv('../../data/player_ids/player_table.csv')
+        player_table = pd.read_csv('../../../../data/player_ids/player_table.csv')
         espn_advance['season'] = espn_advance.apply(lambda row: str(int(row['season'] - 1)) +  '-' +  str(int(row['season'])), axis=1)
         espn_advance = (pd.merge(espn_advance, player_table,
                                     how='left', on='espn_link')
@@ -420,7 +420,7 @@ def impute_missing_values(df):
 
     else:
         # Read in Position Data and Reformat Season to YYYY-YYYY
-        bbref_position_estimates = pd.read_csv('../../data/nba/basketball_reference/player_data/positional_estimates/player_position_estimates.csv')
+        bbref_position_estimates = pd.read_csv('../../../../data/nba/basketball_reference/player_data/positional_estimates/player_position_estimates.csv')
         bbref_position_estimates['season'] = bbref_position_estimates.apply(lambda row: str(int(row['season'] - 1)) +  '-' +  str(int(row['season'])), axis=1)
         bbref_position_estimates = bbref_position_estimates[['bbref_id', 'season', 'advanced_position_cluster']]
         # Join onto Targets
@@ -665,4 +665,4 @@ if __name__=='__main__':
     model_input_3WAVG = metrics_to_averages(model_input)
 
     # model_input = create_model_input(['bbref_box_score'])
-    # model_input.to_csv('../feature_selection/features/bbref_box_scores.csv', index=False)
+    # model_input.to_csv('../feature_selection/featurized_inputs/bbref_box_scores2.csv', index=False)

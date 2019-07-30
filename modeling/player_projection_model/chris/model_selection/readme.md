@@ -28,7 +28,7 @@ As we found in the feature selection phase of the project, many of the 'all-enco
 ![Ridge Regression Coefficients](plots/feature_importance.png)
 
 #### 2019-2020 Predictions
-The final predictions for the 2019-2020 season can be found in `predictions/predictions.csv`. A quick look at the top and bottom-25 players in our predictions broadly align with general consensus. Reigning MVP, Giannis Antetokounmpo, appears first followed by 2018-2019 First-Team All-NBA members Nikola Jokic and James Harden. At the other end of the spectrum we see a few second-year players, Kevin Knox and Collin Sexton, that recorded historically poor performances in 2018-2019 who are again projected to struggle. 
+The final predictions for the 2019-2020 season can be found in `predictions/predictions.csv`. A quick look at the top and bottom-25 players in our predictions broadly align with general consensus. Reigning MVP, Giannis Antetokounmpo, appears first followed by 2018-2019 First-Team All-NBA members Nikola Jokic and James Harden. At the other end of the spectrum we see a few second-year players, Kevin Knox and Collin Sexton, that recorded historically poor performances in 2018-2019 who are again projected to struggle.
 ![Top 25 Predictions](plots/top_25predictions.png)
 
 ![Bottom 25 Predictions](plots/bottom_25predictions.png)

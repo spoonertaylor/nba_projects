@@ -35,10 +35,10 @@ plt.show()
 
 
 # Read in data sources
-player_table = pd.read_csv('../../data/player_ids/player_table.csv')
-espn_nba_rpm = pd.read_csv('../../data/nba/espn/espn_nba_rpm.csv')
-salary_df = pd.read_csv('../../data/nba/basketball_reference/player_data/salary_info.csv')
-bbref_player_df = pd.read_csv('../../data/nba/basketball_reference/player_data/bbref_player_data.csv')
+player_table = pd.read_csv('../../../../data/player_ids/player_table.csv')
+espn_nba_rpm = pd.read_csv('../../../../data/nba/espn/espn_nba_rpm.csv')
+salary_df = pd.read_csv('../../../../data/nba/basketball_reference/player_data/salary/salary_info.csv')
+bbref_player_df = pd.read_csv('../../../../data/nba/basketball_reference/player_data/combined/bbref_player_data.csv')
 
 # Convert season from yyyy to yyyy-yyyy to join on
 salary_df = salary_df[salary_df['season'].notnull()]
