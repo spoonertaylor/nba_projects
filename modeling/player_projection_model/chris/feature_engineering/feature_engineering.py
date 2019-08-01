@@ -2,7 +2,7 @@
 # Description: Engineer potentential features for player projection model. Join
 # all features onto target variable. Impute null values.
 # Data Sources: Basketball-Reference and ESPN
-# Last Updated: 7/17/2019
+# Last Updated: 7/31/2019
 
 import numpy as np
 import pandas as pd
@@ -658,11 +658,23 @@ def metrics_to_averages(df, weighted=True):
     return df
 
 if __name__=='__main__':
-    # Join all data sources to target variable
-    model_input = create_model_input(['bbref_box_score', 'bbref_measurements', 'bbref_league_percentile', 'bbref_position_percentile', 'bbref_position_estimates', 'bbref_salary', 'espn_advance'])
+    # Create Inputs Including Only Box Score Inputs
+    model_input = create_model_input(['bbref_box_score'])
+    model_input.to_csv('../feature_selection/featurized_inputs/box_score_inputs.csv', index=False)
 
-    # Transform all season-level statistics to weighted three-season averages
+    # Create Inputs Including Only 3-Season Weighted Average Box Score Inputs
+    model_input = create_model_input(['bbref_box_score'])
     model_input_3WAVG = metrics_to_averages(model_input)
+    model_input_3WAVG.to_csv('../feature_selection/featurized_inputs/box_score_3WAVG_inputs.csv', index=False)
 
-    # model_input = create_model_input(['bbref_box_score'])
-    # model_input.to_csv('../feature_selection/featurized_inputs/bbref_box_scores2.csv', index=False)
+    # Create Inputs Including League Percentiles
+    model_input_league_percentiles = create_model_input(['bbref_league_percentile'])
+    model_input_league_percentiles.to_csv('../feature_selection/featurized_inputs/box_score_league_percentiles.csv', index=False)
+
+    # Create Inputs Including Position Percentiles
+    model_input_position_percentiles = create_model_input(['bbref_position_percentile'])
+    model_input_position_percentiles.to_csv('../feature_selection/featurized_inputs/box_score_position_percentiles.csv', index=False)
+
+    # Create Inputs Including Position, Salary, and ESPN Advanced Metrics
+    model_inputs_other = create_model_input(['bbref_position_estimates', 'bbref_salary', 'espn_advance'])
+    model_inputs_other.to_csv('../feature_selection/featurized_inputs/other_inputs.csv', index=False)

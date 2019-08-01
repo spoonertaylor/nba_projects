@@ -2,23 +2,29 @@
 # Description: Build model to predict a player's RPM/BPM blend one season in the
 # future. Investigate feature importances.
 # Data Sources: Basketball-Reference and ESPN
-# Last Updated: 7/28/2019
+# Last Updated: 7/31/2019
 
 import numpy as np
 import pandas as pd
 import pickle
+import os
 import imgkit
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split, GridSearchCV, KFold, cross_val_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import Lasso, Ridge, ElasticNet
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from xgboost import XGBRegressor
+from catboost import CatBoostRegressor
 from sklearn.metrics import mean_squared_error
+
+# Avoid XGBoost Initialization Error
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 # Plotting Style
 plt.style.use('fivethirtyeight')
 
-# Supress various warnings. ConvergenceWarning won't work when gradient boosting
+# Supress various warnings. ConvergenceWarning won't surpress when gradient boosting
 # is run in parallel.
 import warnings
 from sklearn.exceptions import DataConversionWarning, ConvergenceWarning
@@ -70,7 +76,7 @@ def plot_cross_validation(X, y, models, scoring):
 
 if __name__=='__main__':
     # Read in featurized Basketball-Reference Totals, Per 100, and Advanced Data
-    bbref_box_score = pd.read_csv('../feature_selection/featurized_inputs/bbref_box_scores.csv')
+    bbref_box_score = pd.read_csv('../feature_selection/featurized_inputs/box_score_inputs.csv')
     # Filter to SEASON_PLUS_1 target variable
     # Drop other target variables and raw total columns
     bbref_box_score = (bbref_box_score[bbref_box_score['SEASON_PLUS_1'].notnull()]
@@ -102,10 +108,16 @@ if __name__=='__main__':
               ElasticNet(),
 
               'Random Forest':
-               RandomForestRegressor(),
+              RandomForestRegressor(),
 
-               'Gradient Boosting':
-               GradientBoostingRegressor()}
+              'Gradient Boosting':
+              GradientBoostingRegressor(),
+
+              'XGBoost':
+              XGBRegressor(),
+
+              'CatBoost':
+              CatBoostRegressor()}
 
     plot_cross_validation(X_train, y_train, models, 'neg_mean_squared_error')
 
