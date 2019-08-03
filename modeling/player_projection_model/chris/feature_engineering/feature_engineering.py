@@ -205,7 +205,9 @@ def create_model_input(data_source_list):
                                                 suffixes=('', '_duplicate'))
 
     # Drop duplicate fields
-    targets.drop([col for col in targets.columns if '_duplicate' in col], axis=1, inplace=True)
+    targets.drop([col for col in targets.columns if '_duplicate' in col],
+                    axis=1,
+                        inplace=True)
     # Drop irrelivent and duplicate fields
     targets.drop([col for col in ['team_flag', 'contract_type', 'league', 'BBREF_ID', 'SEASON', 'RANK', 'POSITION_MINUTES'] if col in targets.columns], axis=1, inplace=True)
     # Impute missing values
@@ -658,23 +660,34 @@ def metrics_to_averages(df, weighted=True):
     return df
 
 if __name__=='__main__':
-    # Create Inputs Including Only Box Score Inputs
-    model_input = create_model_input(['bbref_box_score'])
-    model_input.to_csv('../feature_selection/featurized_inputs/box_score_inputs.csv', index=False)
-
-    # Create Inputs Including Only 3-Season Weighted Average Box Score Inputs
-    model_input = create_model_input(['bbref_box_score'])
+    # Transform single-season features into three-season weighted averages
+    model_input = create_model_input(['bbref_box_score',
+                                      'bbref_measurements',
+                                      'bbref_league_percentile',
+                                      'bbref_position_percentile',
+                                      'bbref_position_estimates',
+                                      'bbref_salary',
+                                      'espn_advance'])
     model_input_3WAVG = metrics_to_averages(model_input)
-    model_input_3WAVG.to_csv('../feature_selection/featurized_inputs/box_score_3WAVG_inputs.csv', index=False)
 
-    # Create Inputs Including League Percentiles
-    model_input_league_percentiles = create_model_input(['bbref_league_percentile'])
-    model_input_league_percentiles.to_csv('../feature_selection/featurized_inputs/box_score_league_percentiles.csv', index=False)
+    # Create single-season features from Box Score, League Percentiles,
+    # Position_Percentiles, ESPN Advance, Positional Estimates, Measurements,
+    # and Salary data sources
+    model_input = create_model_input(['bbref_box_score',
+                                      'bbref_measurements',
+                                      'bbref_league_percentile',
+                                      'bbref_position_percentile',
+                                      'bbref_position_estimates',
+                                      'bbref_salary',
+                                      'espn_advance'])
 
-    # Create Inputs Including Position Percentiles
-    model_input_position_percentiles = create_model_input(['bbref_position_percentile'])
-    model_input_position_percentiles.to_csv('../feature_selection/featurized_inputs/box_score_position_percentiles.csv', index=False)
-
-    # Create Inputs Including Position, Salary, and ESPN Advanced Metrics
-    model_inputs_other = create_model_input(['bbref_position_estimates', 'bbref_salary', 'espn_advance'])
-    model_inputs_other.to_csv('../feature_selection/featurized_inputs/other_inputs.csv', index=False)
+    # Join single-season and three-season weighted average features into single
+    # feature matrix to use in model_selection and model_pipeline scripts
+    complete_feature_matrix = pd.merge(model_input, model_input_3WAVG,
+                                        on=['BBREF_ID', 'SEASON'],
+                                        suffixes=('', '_duplicate'))
+    complete_feature_matrix.drop([col for col in complete_feature_matrix.columns if '_duplicate' in col],
+                                axis=1,
+                                inplace=True)
+    complete_feature_matrix.to_csv('../feature_selection/featurized_inputs/complete_feature_matrix.csv',
+                                    index=False)

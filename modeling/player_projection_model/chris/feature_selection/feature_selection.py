@@ -154,7 +154,7 @@ def permutation_importance(df, target, predictors):
 
 if __name__=='__main__':
     # Read in featurized Basketball-Reference Box Score Data
-    bbref_box_score = pd.read_csv('featurized_inputs/bbref_box_scores.csv')
+    bbref_box_score = pd.read_csv('featurized_inputs/box_score_inputs.csv')
     # Filter to SEASON_PLUS_1 target variable
     # Drop other target variables and raw total columns
     bbref_box_score = (bbref_box_score[bbref_box_score['SEASON_PLUS_1'].notnull()]
