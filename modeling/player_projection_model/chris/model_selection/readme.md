@@ -1,37 +1,53 @@
-Model Selection
+Modeling
 ---
 #### Motivation
-Having engineered an input dataset containing per-100 possession and advanced box-score data we now evaluate potential algorithms to use as our final model.
+Having engineered an input dataset containing on-court metrics, player measurements, salary, and other predictors we now evaluate potential algorithms to use in our final models. Once we've selected a list of candidate algorithms we'll then build a pipeline to gridsearch over various algorithms, parameters, and predictor subsets to optimize our 'Season+1' through 'Season+5' models. Lastly, we'll examine model performance and look at predictions for the upcoming 2019-2020 season.
 
-#### Cross Validation
-After performing a 75/25 train/test split and scaling each subset of data, we performed a 10-fold cross validation on five model types to gain a general understanding of what model best fits out data. Using default parameters for sklean's implementation of Ridge, Lasso, Elastic Net, Random Forest, and Gradient Boosting algorithms, we observed the following RMSE scores. Of the regularized regression model types Ridge far outperforms Lasso and Elastic Net. Gradient Boosting performs best overall but only slightly better than the Ridge model.
+#### Model Selection
+To gain a better understanding of what algorithms might best fit our data, we'll use the `box-score` predictors subset, containing per-100 possession and advanced metrics, to predict a player's RPM/BPM blend one season into the future. This 'Season+1' model will serve as a baseline for how we might expect the candidate algorithms to perform using other predictor subsets on our 'Season+1' through 'Season+5' models. This will aid in winnowing down the list of potential algorithms to gridsearch over in our final modeling step, drastically cutting down on computation time.
+
+After performing a 75/25 train/test split and scaling the data, we performed a 10-fold cross validation on seven candidate algorithms. Using default parameters for sklearn's implementation of Ridge, Lasso, Elastic Net, Random Forest, and Gradient Boosting algorithms along with XGBoost and CatBoost, we observed the following RMSE scores.
 
 ![KFold Cross Validation](plots/model_comparison.png)
 
-#### GridSearch
-With the Ridge and Gradient Boosting algorithms performing best in our 'naive' cross validation approach we then performed a gridsearch on each to optimize parameters, which are listed below.
+Of the regularized regression model types, Ridge far outperforms Lasso and Elastic Net. CatBoost performs best overall but only slightly better than the other boosting algorithms. Keeping in mind the computational resources required to train both the XGBoost and CatBoost algorithms we've decided to exclude them from our final gridsearch process as sklearn's Gradient Boosting implementation appears to perform only slightly worse.
 
-**Ridge Regression Gridsearched Parameters:**
-```
-Best Params: {'alpha': 4.1, 'solver': 'sag', 'tol': 0.07901}
-```
-**Gradient Boosting Gridsearched Parameters:**
-```
-Best Params: {'learning_rate': 0.1, 'loss': 'huber', 'max_depth': 2, 'n_estimators': 110, 'warm_start': True}
-```
+For exploratory purposes, as this won't serve as our final model, we tuned and re-fit the ridge regression above to gain a sense of how our observations in the exploratory data analysis step align with the models' feature importances.
 
-#### Test Set Performance
-With our optimized parameters, we scored the test set for both potential models above. The Ridge Regression recorded a RMSE of 1.95 while the Gradient Boosting model recorded a 1.89. The BPM/RPM blend we used as our target variable ranged from -9.87 to 9.84 in our training set. With an optimal test score, we'll use the Gradient Boosting model to make our final predictions. However, as a thought exercise we can examine the coefficients from the final Ridge model to get a sense of feature importance.
-
-As we found in the feature selection phase of the project, many of the 'all-encompassing' box-score metrics, VORP and BPM in particular are most predictive. Steal metrics (`PER100_STL` and `STL%`) show up higher in importance in the final model while free throw metrics (`PER100_FT`, `PER100_FTA`, and `FT_RATE`) all appeared lower. `AGE` appeared slightly higher as did `PER100_3PA`. `USG%` and `MP` again were not as high as the casual observer might expect.
+As we found in the feature selection phase of the project many of the 'all-encompassing' box-score metrics, `VORP` and `BPM` in particular, are most predictive. Steal metrics (`PER100_STL` and `STL%`) show up higher in importance in the ridge model while free throw metrics (`PER100_FT`, `PER100_FTA`, and `FT_RATE`) all appeared lower. `AGE` appeared slightly higher as did `PER100_3PA`. `USG%` and `MP` again were not as high as the casual observer might expect.
 
 ![Ridge Regression Coefficients](plots/feature_importance.png)
 
+#### Final Models
+To build our 'Season+1' through 'Season+5' models, we created an sklearn pipeline allowing us to gridsearch over various algorithms, hyperparameters, and predictor subsets for each respective model. The list of potential algorithms and predictor subsets are listed below.
+
+**Candidate Algorithms**
+1. Ridge Regression
+2. Lasso Regression
+3. Elastic Net Regression
+4. Random Forest
+5. Gradient Boosting
+
+**Predictor Subsets**
+1. Box-Score: Single-Season Per-100 Possession and Advanced Metrics
+2. Three-Season Weighted-Average Box-Score: Three-season weighted averages for Per-100 Possession and Advanced Metrics
+3. League Percentiles: Single-season percentile of a player's performance in a given metric compared to the entire league
+4. Three-Season Weighted-Average League Percentiles: Three-season weighted average percentile of a player's performance in a given metric compared to the entire league
+5. Position Percentiles: Single-season percentile of a player's performance in a given metric compared to the player's advanced cluster position (Guard, Wing, Big)
+6. Three-Season Weighted-Average Position Percentiles: Three-season weighted average percentile of a player's performance in a given metric compared to the player's advanced cluster position (Guard, Wing, Big)
+
+The pipeline gridsearch selects the best combination of algorithm, hyperparameters, and predictor subset for each model 'Season+1' through 'Season+5' based on a 5-fold cross validation process to minimize MSE. Below are the results from this process with RMSE listed instead of MSE as it in the same unit measurement as the target variable and is thus easier to interpret. For reference, the BPM/RPM blend we used as our target variable ranged from -9.87 to 9.84 in our training set.
+
+![Model Performance](plots/model_performance.png)
+
+Season+1 through Season+3 performed best with the three-season weighted-average box-score data, while the Season+4 and Season+5 performed best with the single-season box-score data. The mix of algorithms seems somewhat sporadic with Ridge Regression performing best for the Season +1 and Season+3 models, Gradient Boosting performing best for Season+2 and Season+4 models, and ElasticNet performing best for Season+5 model.
+
 #### 2019-2020 Predictions
-The final predictions for the 2019-2020 season can be found in `predictions/predictions.csv`. A quick look at the top and bottom-25 players in our predictions broadly align with general consensus. Reigning MVP, Giannis Antetokounmpo, appears first followed by 2018-2019 First-Team All-NBA members Nikola Jokic and James Harden. At the other end of the spectrum we see a few second-year players, Kevin Knox and Collin Sexton, that recorded historically poor performances in 2018-2019 who are again projected to struggle.
+The final predictions for all seasons, including the 2019-2020 season, can be found in `predictions/predictions.csv`. A quick look at the top and bottom-25 players in our predictions for the 2019-2020 season broadly align with general consensus. Reigning MVP, Giannis Antetokounmpo, along with 2018-2019 First-Team All-NBA members Nikola Jokic and James Harden appear at the top of the list. At the other end of the spectrum we see a few second-year players, Kevin Knox and Collin Sexton, that recorded historically poor performances in 2018-2019 who are again projected to struggle.
+
 ![Top 25 Predictions](plots/top_25predictions.png)
 
 ![Bottom 25 Predictions](plots/bottom_25predictions.png)
 
 #### Next Steps
-To improve upon the existing model we will replicate the above process using new inputs such as three-season weighted averages, league percentiles, positional percentiles, measurements, salary, and more advanced metrics. Having optimized this 'one-season' model we will then expand our predictions into future seasons.
+Improve upon the existing models by filtering the training set to a more representative subset of players. This could include some minutes threshold or years of service. An alternative approach would be to build separate models for each advance cluster position (Guard, Wing, Big) to see if that improves predictions.

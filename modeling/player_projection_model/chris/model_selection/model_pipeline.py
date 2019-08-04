@@ -3,7 +3,7 @@
 # model types, and hyperparameters. Build five seperate models to predict
 # a player's future RPM/BPM Blend +1 to +5 seasons into the future.
 # Data Sources: Basketball-Reference and ESPN
-# Last Updated: 8/2/2019
+# Last Updated: 8/3/2019
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import Lasso, Ridge, ElasticNet
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
+from sklearn.externals import joblib
 
 # Supress various warnings. Warnings won't surpress when gridsearch is run in
 # parallel
@@ -536,6 +537,14 @@ if __name__=='__main__':
         # Save best model parameters in dictionary
         model_best_params['Season+{0}'.format(future_season)] = grid.best_params_
 
+        # Save pipeline
+        # Can load pipeline via following syntax
+        # ```
+        # pipeline = joblib.load('models/season+1_pipeline.pkl')
+        # y_pred = pipeline.predict(X_test)
+        # ```
+        joblib.dump(grid.best_estimator_, 'models/season+{0}_pipeline.pkl'.format(future_season))
+
         # Score Test Set
         y_pred = grid.predict(X_test)
         print('Test RMSE: ', np.sqrt(abs(mean_squared_error(y_test, y_pred))))
@@ -548,14 +557,62 @@ if __name__=='__main__':
         y_pred = grid.predict(X)
         complete_feature_matrix['PLUS{0}_PREDICTION'.format(future_season)] = y_pred
     # Combine +1 through +5 predicitons into original dataframe
-    complete_feature_matrix = complete_feature_matrix[['BBREF_ID',
-                                                       'PLAYER',
-                                                       'SEASON',
-                                                       'PLUS1_PREDICTION',
-                                                       'PLUS2_PREDICTION',
-                                                       'PLUS3_PREDICTION',
-                                                       'PLUS4_PREDICTION',
-                                                       'PLUS5_PREDICTION']]
+    predictions_df = complete_feature_matrix[['BBREF_ID',
+                                               'PLAYER',
+                                               'SEASON',
+                                               'ADVANCED_POSITION_CLUSTER',
+                                               'PLUS1_PREDICTION',
+                                               'PLUS2_PREDICTION',
+                                               'PLUS3_PREDICTION',
+                                               'PLUS4_PREDICTION',
+                                               'PLUS5_PREDICTION']]
+
+    # Write out predictiibns
+    predictions_df.to_csv('predictions/predictions.csv', index=False)
+
+    # Save top-25 predictions for 2018-2019 in pandas styling format
+    styled_top25 = (predictions_df[predictions_df['SEASON']=='2018-2019']
+                     .sort_values(by='PLUS1_PREDICTION',
+                                  ascending=False)
+                     .iloc[0:25, 1:5]
+                     .style
+                     .set_table_styles(
+                     [{'selector': 'tr:nth-of-type(odd)',
+                       'props': [('background', '#eee')]},
+                      {'selector': 'tr:nth-of-type(even)',
+                       'props': [('background', 'white')]},
+                      {'selector':'th, td', 'props':[('text-align', 'center')]}])
+                     .set_properties(subset=['PLAYER',
+                                            'AGE',
+                                            'SEASON',
+                                            'ADVANCED_POSITION_CLUSTER'],
+                                    **{'text-align': 'left'})
+                     .hide_index()
+                     .background_gradient(subset=['PLUS1_PREDICTION'], cmap='Reds'))
+    html = styled_top25.render()
+    imgkit.from_string(html, 'plots/top_25predictions.png', {'width': 1})
+
+    # Save bottom-25 predictions for 2018-2019 in pandas styling format
+    styled_bottom25 = (predictions_df[predictions_df['SEASON']=='2018-2019']
+                     .sort_values(by='PLUS1_PREDICTION',
+                                  ascending=False)
+                     .iloc[-25:, 1:5]
+                     .style
+                     .set_table_styles(
+                     [{'selector': 'tr:nth-of-type(odd)',
+                       'props': [('background', '#eee')]},
+                      {'selector': 'tr:nth-of-type(even)',
+                       'props': [('background', 'white')]},
+                      {'selector':'th, td', 'props':[('text-align', 'center')]}])
+                     .set_properties(subset=['PLAYER',
+                                            'AGE',
+                                            'SEASON',
+                                            'ADVANCED_POSITION_CLUSTER'],
+                                    **{'text-align': 'left'})
+                     .hide_index()
+                     .background_gradient(subset=['PLUS1_PREDICTION'], cmap='Blues_r'))
+    html = styled_bottom25.render()
+    imgkit.from_string(html, 'plots/bottom_25predictions.png', {'width': 1})
 
     # Create Model Performance Tables
     # Cross validation scores from models +1 through +5
