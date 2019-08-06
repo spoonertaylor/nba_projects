@@ -9,7 +9,7 @@
 
 2. [Feature Engineering](#feature-engineering)
 
-3. [Feature Selection/EDA](#feature-selection-/-eda)
+3. [Feature Selection/EDA](#feature-selection)
 
 4. [Modeling](#modeling)
 
@@ -108,7 +108,7 @@ The final model input dataframe can be found in `/feature_selection/featurized_i
 
 
 ---
-### Feature Selection/EDA
+### Feature Selection
 To better understand the relationship between individual features and the target variable (RPM/BPM Blend), we utilized three main techniques. First, to determine the strength of the relationship between each feature and the target we examined the correlation between the two. We also looked at the full correlation matrix to uncover potential collinearity. Second, we used permutation importance to gain a better understanding of how important a feature was in predicting the target variable. Lastly, we looked at partial dependence plots to uncover the shape and direction of the relationship. The following provides a brief overview of the work. For brevity, we've only included EDA on the box-score feature subset, which includes per-100 possession and advance metrics, for the '+1Season' model below although we followed this same approach for each model and feature subset.
 
 #### Correlation Table
