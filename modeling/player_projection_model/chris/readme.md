@@ -9,7 +9,7 @@
 
 2. [Feature Engineering](#feature-engineering)
 
-3. [Feature Selection/EDA](#feature-selection/eda)
+3. [Feature Selection/EDA](#feature-selection-/-eda)
 
 4. [Modeling](#modeling)
 
