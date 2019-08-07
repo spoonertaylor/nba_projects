@@ -31,7 +31,7 @@ From a model performance standpoint, our projections are made from five individu
 6. [References](#references)
 
 ---
-### Target Selection
+## Target Selection
 In preparation for building a player projection model, we sought to identify a metric that represented a player's 'value' at the season level that was a leading indicator of the player's future performance in subsequent seasons. This leading indicator would serve as our target variable when attempting to build a model that would effectively predict future performance. To determine which metric was the best leading indicator we calculated the pairwise cross-correlation of Box Plus-Minus (BPM), Real Plus-Minus (RPM), Net Rating, Wins (RPM Wins), VORP (Value Over Replacement Player), and WOR (Wins Over Replacement) for all players since the 2004-2005 season to determine the seasonal-lead (or lag) between the two metrics. The distribution of these seasonal-leads across all players provides evidence of which metrics lead or lag others.
 
 After examining the resulting distributions of all pairwise metric comparisons, we determined that BPM is the best target variable candidate for our player projection modeling. It leads all other metrics mentioned above and does so consistently when this process was repeated using only those players that met the starter-criteria (>2000 MP), met a fringe-player criteria (>500 MP), or played since the 2013-2014 season (when RPM first became available). This finding coincides with that of the [538 Player Projection model](https://fivethirtyeight.com/methodology/how-our-nba-predictions-work/), one of the most prevalent public models, which uses a blend of BPM and RPM as its target variable.
@@ -80,7 +80,7 @@ BPM, VORP, WOR, and Net Rating, in addition to salary data, were scraped from Ba
 
 ---
 
-### Feature Engineering
+## Feature Engineering
 Having collected and aggregated various datasets including on-court metrics, player measurements, positional estimates, and salary information we used those existing features to engineer new metrics that might be more predictive in our projection model. Our final model input dataframe contains six 'feature subsets,' each containing a different set of engineered features. Our intent is to use these feature subsets as a parameter in the model to gridsearch over in hopes of selecting the optimal inputs.
 
 #### Raw Data
@@ -119,7 +119,7 @@ The final model input dataframe can be found in `/feature_selection/featurized_i
 
 
 ---
-### Feature Selection
+## Feature Selection
 To better understand the relationship between individual features and the target variable (RPM/BPM Blend), we utilized three main techniques. First, to determine the strength of the relationship between each feature and the target we examined the correlation between the two. We also looked at the full correlation matrix to uncover potential collinearity. Second, we used permutation importance to gain a better understanding of how important a feature was in predicting the target variable. Lastly, we looked at partial dependence plots to uncover the shape and direction of the relationship. The following provides a brief overview of the work. For brevity, we've only included EDA on the box-score feature subset, which includes per-100 possession and advance metrics, for the '+1Season' model below although we followed this same approach for each model and feature subset.
 
 #### Correlation Table
@@ -192,7 +192,7 @@ All-encompassing advanced metrics are highly predictive. Free throws are incredi
 
 ---
 
-### Modeling
+## Modeling
 Having engineered an input dataset containing on-court metrics, player measurements, positional estimates, and salary information we now evaluate potential algorithms to use in our final models. Once we've selected a list of candidate algorithms we'll then build a pipeline to gridsearch over various algorithms, parameters, and predictor subsets to optimize our 'Season+1' through 'Season+5' models. Lastly, we'll examine model performance and look at predictions for the upcoming 2019-2020 season.
 
 #### Model Selection
@@ -243,9 +243,11 @@ The final predictions for all seasons, including the 2019-2020 season, can be fo
 
 ---
 
-### Next Steps
+## Next Steps
 Improve upon the existing models by filtering the training set to a more representative subset of players. This could include some minutes threshold or years of service. An alternative approach would be to build separate models for each advance cluster position (Guard, Wing, Big) to see if that improves predictions.
 
-### References
+---
+
+## References
 1) 538 - *How Our NBA Predictions Work*   
 https://fivethirtyeight.com/methodology/how-our-nba-predictions-work/
