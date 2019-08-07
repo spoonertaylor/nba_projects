@@ -1,23 +1,21 @@
 # Player Projection Model | Chris
 
-#### Motivation
+### Motivation
+To aid in player evaluation and roster construction decisions we sought to build a player projection model providing insight into the expected career trajectory of a player. This suite of models predicts a player's performance one to five seasons into the future based on the player's on-court metrics, physical measurements, positional estimates, and salary information. By better understanding where a team's own player may be heading developmentally, a team may better allocate monetary and player development resources. Teams may also use this information to evaluate external players, whom they may acquire via trade or free agency, to determine a player's future performance and salary earnings.
 
-#### Results
+The following documentation covers our methodology and findings. Our complete predictions can be found in `modeling/predictions/predictions.csv`.
 
-#### Table of Contents
+### Results
+Example Player Plot
+Top 10 2019-2020 and Top 10 2023-2024 Tables
+
+### Table of Contents
 1. [Target Selection](#target-selection)
-
 2. [Feature Engineering](#feature-engineering)
-
 3. [Feature Selection/EDA](#feature-selection)
-
 4. [Modeling](#modeling)
-
 5. [Next Steps](#next-steps)
-
 6. [References](#references)
-
-#### Directory Structure
 
 ---
 ### Target Selection
@@ -236,3 +234,5 @@ The final predictions for all seasons, including the 2019-2020 season, can be fo
 Improve upon the existing models by filtering the training set to a more representative subset of players. This could include some minutes threshold or years of service. An alternative approach would be to build separate models for each advance cluster position (Guard, Wing, Big) to see if that improves predictions.
 
 ### References
+1) 538 - *How Our NBA Predictions Work*   
+https://fivethirtyeight.com/methodology/how-our-nba-predictions-work/
