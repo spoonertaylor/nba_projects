@@ -1,13 +1,26 @@
 # Player Projection Model | Chris
 
+
+
 ### Motivation
-To aid in player evaluation and roster construction decisions we sought to build a player projection model providing insight into the expected career trajectory of a player. This suite of models predicts a player's performance one to five seasons into the future based on the player's on-court metrics, physical measurements, positional estimates, and salary information. By better understanding where a team's own player may be heading developmentally, a team may better allocate monetary and player development resources. Teams may also use this information to evaluate external players, whom they may acquire via trade or free agency, to determine a player's future performance and salary earnings.
+To aid in player evaluation and roster construction decisions we sought to build a player projection system providing insight into the expected career trajectory of a player. This suite of models predicts a player's performance one to five seasons into the future based on the player's on-court metrics, physical measurements, positional estimates, and salary information. By better understanding where a team's own player may be heading developmentally, a team may better allocate monetary and player development resources. Teams may also use this information to evaluate external players, whom they may acquire via trade or free agency, to determine a player's future performance and salary earnings.
 
 The following documentation covers our methodology and findings. Our complete predictions can be found in `modeling/predictions/predictions.csv`.
 
 ### Results
-Example Player Plot
-Top 10 2019-2020 and Top 10 2023-2024 Tables
+We projected the future on-court performance, a blend of Real Plus-Minus and Box Plus-Minus, of each player from the 2018-2019 NBA seasons five seasons into the future. An example of those projections along with actuals from the previous six seasons for LeBron James can be found below.
+
+![James Harden](modeling/predictions/plots/Lebron_James.jpeg)
+
+A quick look at the top-10 projected players for the upcoming 2019-2020 season sees reigning MVP, Giannis Antetokounmpo, along with 2018-2019 First-Team All-NBA members Nikola Jokic and James Harden at the top of the list.
+
+![Top-10 2019-2020](modeling/predictions/plots/top10_2020.png)
+
+From a model performance standpoint, our projections are made from five individual models each projecting out one to five seasons in advance, respectively. Each was fit using a 5-fold cross validation gridsearch process to optimize the model type, predictor subset, and hyperparameters. The test RMSE ranges from 1.89 for the Season+1 model to 2.23 for the Season+5 model. For reference, the RPM/BPM blend we are predicting ranges from -9.87 to 9.84 in our training set.
+
+![Model Performance](modeling/plots/model_performance.png)
+
+
 
 ### Table of Contents
 1. [Target Selection](#target-selection)
