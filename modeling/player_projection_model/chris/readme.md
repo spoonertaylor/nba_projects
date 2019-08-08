@@ -3,7 +3,7 @@
 
 
 ### Motivation
-To aid in player evaluation and roster construction decisions we sought to build a player projection system providing insight into the expected career trajectory of a player. This suite of models predicts a player's performance one to five seasons into the future based on the player's on-court metrics, physical measurements, positional estimates, and salary information. By better understanding where a team's own player may be heading developmentally, a team may better allocate monetary and player development resources. Teams may also use this information to evaluate external players, whom they may acquire via trade or free agency, to determine a player's future performance and salary earnings.
+To aid in player evaluation and roster construction decisions we sought to build a player projection system providing insight into the expected career trajectory of a player. This suite of models predicts a player's performance one to five seasons into the future based on the player's on-court metrics, physical measurements, positional estimates, and salary information. By better understanding where a team's own player may be heading developmentally, a team may better allocate monetary and player development resources. Teams may also use this information to evaluate external players, whom they may acquire via trade or free agency, in determining a player's future performance and salary earnings.
 
 The following documentation covers our methodology and findings. Our complete predictions can be found in `modeling/predictions/predictions.csv`.
 
@@ -16,7 +16,7 @@ A quick look at the top-10 projected players for the upcoming 2019-2020 season s
 
 ![Top-10 2019-2020](modeling/predictions/plots/top10_2020.png)
 
-From a model performance standpoint, our projections are made from five individual models each projecting out one to five seasons in advance, respectively. Each was fit using a 5-fold cross validation gridsearch process to optimize the model type, predictor subset, and hyperparameters. The test RMSE ranges from 1.89 for the Season+1 model to 2.23 for the Season+5 model. For reference, the RPM/BPM blend we are predicting ranges from -9.87 to 9.84 in our training set.
+From a model performance standpoint, our projections are made from five individual models each projecting out one to five seasons in advance, respectively. Each was fit using a 5-fold cross validation gridsearch process to optimize the model type, predictor subset, and hyperparameters. The test RMSE ranges from 1.89 for the Season+1 model to 2.23 for the Season+5 model. For reference, the RPM/BPM blend we are predicting ranges from -9.87 to 9.84 in our training set, which contains all players since the 2013-2014 season.
 
 ![Model Performance](modeling/plots/model_performance.png)
 
@@ -34,7 +34,7 @@ From a model performance standpoint, our projections are made from five individu
 ## Target Selection
 In preparation for building a player projection model, we sought to identify a metric that represented a player's 'value' at the season level that was a leading indicator of the player's future performance in subsequent seasons. This leading indicator would serve as our target variable when attempting to build a model that would effectively predict future performance. To determine which metric was the best leading indicator we calculated the pairwise cross-correlation of Box Plus-Minus (BPM), Real Plus-Minus (RPM), Net Rating, Wins (RPM Wins), VORP (Value Over Replacement Player), and WOR (Wins Over Replacement) for all players since the 2004-2005 season to determine the seasonal-lead (or lag) between the two metrics. The distribution of these seasonal-leads across all players provides evidence of which metrics lead or lag others.
 
-After examining the resulting distributions of all pairwise metric comparisons, we determined that BPM is the best target variable candidate for our player projection modeling. It leads all other metrics mentioned above and does so consistently when this process was repeated using only those players that met the starter-criteria (>2000 MP), met a fringe-player criteria (>500 MP), or played since the 2013-2014 season (when RPM first became available). This finding coincides with that of the [538 Player Projection model](https://fivethirtyeight.com/methodology/how-our-nba-predictions-work/), one of the most prevalent public models, which uses a blend of BPM and RPM as its target variable.
+After examining the resulting distributions of all pairwise metric comparisons, we determined that BPM and/or RPM are the best target variable candidates for our player projection modeling. Each lead all other metrics mentioned above and do so consistently when this process was repeated using only those players that met the starter-criteria (>2000 MP), met a fringe-player criteria (>500 MP), or played since the 2013-2014 season (when RPM first became available). This finding coincides with that of the [538 Player Projection model](https://fivethirtyeight.com/methodology/how-our-nba-predictions-work/), one of the most prevalent public models, which uses a blend of BPM and RPM as its target variable. With this finding, we too used a 1/3 BPM 2/3 RPM blend as our target variable.
 
 The following documentation describes our data sources, methodology, and additional findings which will later influence our player projection model.
 
@@ -44,14 +44,14 @@ In an attempt to quantify the lead or lag between two metrics, we utilized
 
 Should two metrics move in perfect synchrony, they will be most correlated at a lag of 0. If instead one metric lags another by 1 time period, the two metrics will be most correlated with a lag of 1.
 
-To exemplify this let's look at the plots below. Plot A illustrates two time series that move together without any lead or lag. During the convolution process as one time series is slid over the other they will be most correlated at a lag of 0. Alternatively, in Plot B we observe a lag of one period between the two time series. During the same convolution process these two time series will be most correlated at a lag of 1 time period. Lastly, in Plot C we see a lag of two time periods, which will result in the two time series being most correlated at a lag of 2 during the convolution process.
+To exemplify this let's examine the plots below. Plot A illustrates two time series that move together without any lead or lag. During the convolution process as one time series is slid over the other they will be most correlated at a lag of 0. Alternatively, in Plot B we observe a lag of one period between the two time series. During the same convolution process these two time series will be most correlated at a lag of 1 time period. Lastly, in Plot C we see a lag of two time periods, which will result in the two time series being most correlated at a lag of 2 during the convolution process.
 
 ![Example 1](target_selection/plots/example_plots/Example_1.png)
 
-In practice, the relationship between any two of the metrics in our dataset are not as simple as implied above. However, they still provide insight into which metrics lead or lag others. At the player-level we can illustrate this by comparing the relationship between Minutes Played and Box Plus-Minus over a player's career. Below, we see that MP lagged BPM for the first decade of Vince's career. As his BPM decreased from his rookie year to his seventh season, his total minutes played also decreased but not simultaneously. However, after his trade to New Jersey, his increased on-court performance was followed by an increase in minutes in subsequent seasons. Through the cross-correlation process described above we would calculate that these two time series are most correlated at a lag of one season, suggesting MP lags BPM by one season.
+In practice, the relationship between any two of the metrics in our dataset are not as simple as implied above. However, they still provide insight into which metrics lead or lag others. At the player-level we can illustrate this by comparing the relationship between Minutes Played and Box Plus-Minus over a player's career. Below, we see that MP lagged BPM for the first decade of Vince Carter's career. As his BPM (blue time series) decreased from his rookie year to his seventh season, his total minutes played (red time series) also decreased but not simultaneously. However, after his trade to New Jersey, his increased on-court performance was followed by an increase in minutes in subsequent seasons. Through the cross-correlation process described above we would calculate that these two time series are most correlated at a lag of one season, suggesting MP lags BPM by one season.
 ![Example 2](target_selection/plots/example_plots/Example_2.png)
 
-A second example, shows the career arc of the same metrics for Kyle Korver. As Korver begins to hit his peak BPM between seasons 8-11, his peak MP lags behind from seasons 9-12. Again, we would see a lag of 1 season between MP and BPM.
+A second example, shows the career arc of the same metrics for Kyle Korver. As Korver begins to hit his peak BPM (blue time series) between seasons 8-11, his peak MP (red time series) lags behind from seasons 9-12. Again, we would see a lag of 1 season between MP and BPM.
 ![Example 2.5](target_selection/plots/example_plots/Example_2.5.png)
 
 When this process is extrapolated to all players, we can build a histogram of lags to determine if the relationship observed above holds true across the league. We see below in the left plot, that based on the right-skewed distribution, MP does in fact lag BPM. There are more players with career arcs that exhibit a relationship where MP lags BPM than the inverse. This lagging relationship MP has with BPM also holds true with VORP and Net Rating, although not as strong. MP lags behind three of our metrics in question.
@@ -62,7 +62,7 @@ When run in a pairwise-fashion between all metrics we can see whether a metric i
 
 ![MP Normalized Cross Correlation](target_selection/plots/full_sample/MP_Cross_Correlation.png)
 
-After reviewing all pairwise comparisons we observed that BPM leads all other on-court metrics, we discuss salary later, as evidenced below. This leads us to the conclusion that BPM will serve as the best target variable for our player projection models.
+After reviewing all pairwise comparisons we observed that BPM leads all other on-court metrics, and salary which we will discuss later, as evidenced below. RPM exhibits the same relationship with all metrics and is about equal with BPM thus leading to our final decision of blending the two as our final target variable.
 
 ![BPM Normalized Cross Correlation](target_selection/plots/full_sample/BPM_Cross_Correlation.png)
 
@@ -172,7 +172,7 @@ Surprisingly, the rate at which a player generates threes is not as clear as exp
 ![3PA_Rate PDP](feature_selection/plots/3PA_Rate_pdp.png)
 ![PER100_3PA](feature_selection/plots/per100_3PA_pdp.png)
 
-Since we haven't put any minutes filters on our input data many of the following plots will have noisy tails. Some players with few minutes will record outlier statistics that will influence the ends of these plots. However, the middle of each tells an interesting story. For `PER100_AST`, `PER100_BLK`, `PER100_DRB`, and `PER100_ORB` there appears to BE diminishing returns once a player reaches a certain threshold. From a roster construction standpoint this is interesting as players who record values above these thresholds won't provide as much value as teams might expect.
+Since we haven't put any minutes filters on our input data many of the following plots will have noisy tails. Some players with few minutes will record outlier statistics that will influence the ends of these plots. However, the middle of each tells an interesting story. For `PER100_AST`, `PER100_BLK`, `PER100_DRB`, and `PER100_ORB` there appears to be diminishing returns once a player reaches a certain threshold. From a roster construction standpoint this is interesting as players who record values above these thresholds won't provide as much value as teams might expect.
 
 ![PER100_AST](feature_selection/plots/per100_AST_pdp.png)
 ![PER100_BLK](feature_selection/plots/per100_BLK_pdp.png)
@@ -196,7 +196,7 @@ All-encompassing advanced metrics are highly predictive. Free throws are incredi
 Having engineered an input dataset containing on-court metrics, player measurements, positional estimates, and salary information we now evaluate potential algorithms to use in our final models. Once we've selected a list of candidate algorithms we'll then build a pipeline to gridsearch over various algorithms, parameters, and predictor subsets to optimize our 'Season+1' through 'Season+5' models. Lastly, we'll examine model performance and look at predictions for the upcoming 2019-2020 season.
 
 #### Model Selection
-To gain a better understanding of what algorithms might best fit our data, we'll use the `box-score` predictors subset, containing per-100 possession and advanced metrics, to predict a player's RPM/BPM blend one season into the future. This 'Season+1' model will serve as a baseline for how we might expect the candidate algorithms to perform using other predictor subsets on our 'Season+1' through 'Season+5' models. This will aid in winnowing down the list of potential algorithms to gridsearch over in our final modeling step, drastically cutting down on computation time.
+To gain a better understanding of what algorithms might best fit our data, we'll use the `box-score` predictors subset, containing per-100 possession and advanced metrics, to predict a player's RPM/BPM blend one season into the future. This 'Season+1' model will serve as a baseline for how we might expect the candidate algorithms to perform using other predictor subsets in our 'Season+1' through 'Season+5' models. This will aid in winnowing down the list of potential algorithms to gridsearch over in our final modeling step, drastically cutting down on computation time.
 
 After performing a 75/25 train/test split and scaling the data, we performed a 10-fold cross validation on seven candidate algorithms. Using default parameters for sklearn's implementation of Ridge, Lasso, Elastic Net, Random Forest, and Gradient Boosting algorithms along with XGBoost and CatBoost, we observed the following RMSE scores.
 
@@ -228,7 +228,7 @@ To build our 'Season+1' through 'Season+5' models, we created an sklearn pipelin
 5. Position Percentiles: Single-season percentile of a player's performance in a given metric compared to the player's advanced cluster position (Guard, Wing, Big)
 6. Three-Season Weighted-Average Position Percentiles: Three-season weighted average percentile of a player's performance in a given metric compared to the player's advanced cluster position (Guard, Wing, Big)
 
-The pipeline gridsearch selects the best combination of algorithm, hyperparameters, and predictor subset for each model 'Season+1' through 'Season+5' based on a 5-fold cross validation process to minimize MSE. Below are the results from this process with RMSE listed instead of MSE as it in the same unit measurement as the target variable and is thus easier to interpret. For reference, the BPM/RPM blend we used as our target variable ranged from -9.87 to 9.84 in our training set.
+The pipeline gridsearch selects the best combination of algorithm, hyperparameters, and predictor subset for each model 'Season+1' through 'Season+5' based on a 5-fold cross validation process to minimize MSE. Below are the results from this process with RMSE listed instead of MSE as it is in the same unit measurement as the target variable and is thus easier to interpret. For reference, the BPM/RPM blend we used as our target variable ranged from -9.87 to 9.84 in our training set.
 
 ![Model Performance](modeling/plots/model_performance.png)
 

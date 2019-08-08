@@ -53,7 +53,7 @@ Surprisingly, the rate at which a player generates threes is not as clear as exp
 ![3PA_Rate PDP](plots/3PA_Rate_pdp.png)
 ![PER100_3PA](plots/per100_3PA_pdp.png)
 
-Since we haven't put any minutes filters on our input data many of the following plots will have noisy tails. Some players with few minutes will record outlier statistics that will influence the ends of these plots. However, the middle of each tells an interesting story. For `PER100_AST`, `PER100_BLK`, `PER100_DRB`, and `PER100_ORB` there appears to BE diminishing returns once a player reaches a certain threshold. From a roster construction standpoint this is interesting as players who record values above these thresholds won't provide as much value as teams might expect.
+Since we haven't put any minutes filters on our input data many of the following plots will have noisy tails. Some players with few minutes will record outlier statistics that will influence the ends of these plots. However, the middle of each tells an interesting story. For `PER100_AST`, `PER100_BLK`, `PER100_DRB`, and `PER100_ORB` there appears to be diminishing returns once a player reaches a certain threshold. From a roster construction standpoint this is interesting as players who record values above these thresholds won't provide as much value as teams might expect.
 
 ![PER100_AST](plots/per100_AST_pdp.png)
 ![PER100_BLK](plots/per100_BLK_pdp.png)
