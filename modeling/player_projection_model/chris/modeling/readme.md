@@ -49,5 +49,13 @@ The final predictions for all seasons, including the 2019-2020 season, can be fo
 
 ![Bottom 25 Predictions](plots/bottom_25predictions.png)
 
+From a positional viewpoint, we see that bigs will have the highest average value over the next five seasons. This aligns with what the league has experienced in the last few seasons where the replacement level for bigs has been much higher than for guards and wings.
+
+![Predictions by Position Cluster](plots/predictions_by_cluster.png)
+
+Similarly, the top of the league will be dominated by bigs, primarily Anthony Davis, Karl-Anthony Towns, Giannis Antetokounmpo, and Nikola Jokic over the same time frame. As we see below, bigs and guards make up the majority of the top quartile of the predictions in each of the next five seasons. It appears the positional scarcity of high-end wings will continue into the near future. 
+
+![Predictions by Season](plots/predictions_by_season.png)
+
 #### Next Steps
 Improve upon the existing models by filtering the training set to a more representative subset of players. This could include some minutes threshold or years of service. An alternative approach would be to build separate models for each advance cluster position (Guard, Wing, Big) to see if that improves predictions.
