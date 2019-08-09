@@ -14,7 +14,10 @@ plt.style.use('fivethirtyeight')
 if __name__=='__main__':
     # Read in projections
     predictions = pd.read_csv('predictions/predictions.csv')
-    predictions = predictions[(predictions['SEASON']=='2018-2019') & (~predictions['BBREF_ID'].isin(['davisty01', 'qizh01', 'siberjo01']))]
+    # Filter to 2018-2019 and remove three players with outlier predictions due to
+    # minimal MP
+    predictions = predictions[(predictions['SEASON']=='2018-2019') &
+                              (~predictions['BBREF_ID'].isin(['davisty01', 'qizh01', 'siberjo01']))]
     # Transform predictions to long form instead of wide
     long_predictions = pd.melt(predictions[[
                                         'BBREF_ID',
@@ -47,7 +50,7 @@ if __name__=='__main__':
                                          'ADVANCED_POSITION_CLUSTER',
                                          'BLEND']]
 
-    # Plot blend by position for each season
+    # Plot predictions by position
     fig, axs = plt.subplots(nrows=1, ncols=5, figsize=(18, 5), sharex=True, sharey=True)
     sns.violinplot(x='ADVANCED_POSITION_CLUSTER', y='BLEND', data=long_predictions[long_predictions['SEASON']=='2019-2020'], cut=0, ax=axs[0])
     sns.violinplot(x='ADVANCED_POSITION_CLUSTER', y='BLEND', data=long_predictions[long_predictions['SEASON']=='2020-2021'], cut=0, ax=axs[1])
@@ -64,5 +67,18 @@ if __name__=='__main__':
     axs[2].set_ylabel('')
     axs[3].set_ylabel('')
     axs[4].set_ylabel('')
+    plt.suptitle('Predictions by Position Cluster', fontsize=20)
     plt.tight_layout()
+    plt.subplots_adjust(top=0.85)
+    plt.show()
+
+
+    # Plot predictions by season
+    fig, axs = plt.subplots(figsize=(18, 5))
+    sns.swarmplot(x="SEASON", y="BLEND", hue="ADVANCED_POSITION_CLUSTER",
+              palette=['tab:blue', sns.xkcd_rgb["pale red"], '#e5ae38'], data=long_predictions)
+    plt.suptitle('Predictions by Season', fontsize=20)
+    plt.legend(prop={'size': 8}, title='Position Cluster')
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.85)
     plt.show()

@@ -16,6 +16,15 @@ A quick look at the top-10 projected players for the upcoming 2019-2020 season s
 
 ![Top-10 2019-2020](modeling/predictions/plots/top10_2020.png)
 
+From a positional viewpoint, we see that bigs will have the highest average value over the next five seasons. This aligns with what the league has experienced in the last few seasons where the replacement level for bigs has been much higher than for guards and wings.
+
+![Predictions by Position Cluster](modeling/plots/predictions_by_cluster.png)
+
+Similarly, the top of the league will be dominated by bigs, primarily Anthony Davis, Karl-Anthony Towns, Giannis Antetokounmpo, and Nikola Jokic over the same time frame. As we see below, bigs and guards make up the majority of the top quartile of the predictions in each of the next five seasons. It appears the positional scarcity of high-end wings will continue into the near future.
+
+![Predictions by Season](modeling/plots/predictions_by_season.png)
+
+
 From a model performance standpoint, our projections are made from five individual models each projecting out one to five seasons in advance, respectively. Each was fit using a 5-fold cross validation gridsearch process to optimize the model type, predictor subset, and hyperparameters. The test RMSE ranges from 1.89 for the Season+1 model to 2.23 for the Season+5 model. For reference, the RPM/BPM blend we are predicting ranges from -9.87 to 9.84 in our training set, which contains all players since the 2013-2014 season.
 
 ![Model Performance](modeling/plots/model_performance.png)
