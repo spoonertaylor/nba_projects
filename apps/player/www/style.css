@@ -1,0 +1,69 @@
+.percentile {
+    font-size: 12px;
+    font-weight: bold;
+
+}
+
+.trade_team {
+    font-style: italic;
+}
+
+.full_team {
+    font-weight: bold;
+}
+
+#player_name_cont {
+    margin-top: 3px;
+    margin-bottom: 2px;
+    margin-left: 5px;
+}
+
+#player_info_cont {
+    margin-top: 2px;
+    margin-bottom: 2px;
+    margin-left: 5px;
+}
+
+.contract_info {
+    margin-left: 5%;
+}
+
+#player_salary {
+    padding-top: 10px;
+    margin-left: 5%;
+    margin-right: 5%;
+}
+
+#player_salary .table {
+    margin-bottom: 0px;
+}
+
+.contract_future_regular {
+    font-style: italic;
+}
+
+.contract_future_team_option {
+    font-style: italic;
+    color: blue;
+}
+
+.contract_future_player_option {
+    font-style: italic;
+    color: red;
+}
+
+.contract_future_early_term {
+    font-style: italic;
+    color: hotpink;
+}
+
+pre {
+    padding: 0 0 0 0;
+    font-size: 14px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    background-color: rgba(0, 0, 0, 0);
+    border: 0px;
+    border-style: hidden;
+}

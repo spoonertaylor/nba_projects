@@ -29,8 +29,8 @@ stats_percentile = stats %>%
   group_by(SEASON) %>%
   mutate(height_percentile_all = percent_rank(height),
          weight_percentile_all = percent_rank(weight),
-         age_percentile_all = percent_rank(AGE),
-         games_player_percentile_all = percent_rank(G),
+         age_percentile_all = percent_rank(desc(AGE)),
+         games_played_percentile_all = percent_rank(G),
          games_started_percentile_all = percent_rank(GS),
          minutes = MP,
          minutes_percentile_all = percent_rank(MP),
@@ -50,7 +50,7 @@ stats_percentile = stats %>%
          free_throw_percent_percentile_all = percent_rank(`FT.`),
          oreb_percentile_all = percent_rank(ORB),
          drb_percentile_all = percent_rank(DRB),
-         total_percentile_all = percent_rank(TRB),
+         trb_percentile_all = percent_rank(TRB),
          ast_percentile_all = percent_rank(AST),
          stl_percentile_all = percent_rank(STL),
          blk_percentile_all = percent_rank(BLK),
@@ -98,6 +98,9 @@ stats_percentile = stats %>%
          ) %>%
   select(BBREF_ID, SEASON, contains('percentile_all'))
 
+write.csv(stats_percentile, file = "~/Documents/nba_projects/data/nba/basketball_reference/player_data/percentile/nba_percentile_all.csv",
+          row.names = FALSE)
+
 # Now by position | season
 # Join position
 stats = stats %>%
@@ -108,8 +111,8 @@ stats_percentile = stats %>%
   group_by(SEASON, advanced_position_cluster) %>%
   mutate(height_percentile_position = percent_rank(height),
          weight_percentile_position = percent_rank(weight),
-         age_percentile_position = percent_rank(AGE),
-         games_player_percentile_position = percent_rank(G),
+         age_percentile_position = percent_rank(desc(AGE)),
+         games_played_percentile_position = percent_rank(G),
          games_started_percentile_position = percent_rank(GS),
          minutes = MP,
          minutes_percentile_position = percent_rank(MP),
@@ -129,7 +132,7 @@ stats_percentile = stats %>%
          free_throw_percent_percentile_position = percent_rank(`FT.`),
          oreb_percentile_position = percent_rank(ORB),
          drb_percentile_position = percent_rank(DRB),
-         total_percentile_position = percent_rank(TRB),
+         trb_percentile_position = percent_rank(TRB),
          ast_percentile_position = percent_rank(AST),
          stl_percentile_position = percent_rank(STL),
          blk_percentile_position = percent_rank(BLK),
@@ -176,4 +179,7 @@ stats_percentile = stats %>%
          vorp_percentile_position = percent_rank(VORP)
   ) %>%
   select(BBREF_ID, SEASON, advanced_position_cluster, contains('percentile_position'))
+
+write.csv(stats_percentile, file = "~/Documents/nba_projects/data/nba/basketball_reference/player_data/percentile/nba_percentile_position.csv",
+          row.names = FALSE)
 

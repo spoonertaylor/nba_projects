@@ -183,7 +183,7 @@ bbref_salary_history= function() {
   
 }
 
-bbref_players = read.csv('../../data/player_ids/player_table.csv',
+bbref_players = read.csv("~/Documents/nba_projects/data/player_ids/player_table.csv",
                          stringsAsFactors = FALSE)
 salary_info = bbref_get_salary(bbref_players$bbref_link, TRUE)
 salary_cap = bbref_salary_history()
@@ -193,3 +193,6 @@ salary_info_all = dplyr::left_join(salary_info, salary_cap, by = 'season')
 salary_info_all = salary_info_all %>% 
   dplyr::mutate(salary_prop_cap = salary / salary_cap) %>% 
   dplyr::select(-salary_cap)
+
+write.csv(salary_info_all, file = '~/Documents/nba_projects/data/nba/basketball_reference/player_data/salary/salary_info.csv',
+          row.names = FALSE)
