@@ -1,5 +1,6 @@
 # PURPOSE: Load Data Sources
 `%>%` = dplyr::`%>%`
+
 file_path = paste0(getwd(), "/../../data/")
 player = read.csv(paste0(file_path, 'player_ids/player_table.csv'), stringsAsFactors = FALSE)
 player = player %>% filter(!is.na(player_name))
@@ -45,3 +46,13 @@ percentile_info = percentile %>% group_by(bbref_id) %>% mutate(max_season = max(
   select(bbref_id, age_percentile_position,height_percentile_position, weight_percentile_position) %>%
   ungroup()
 player_info = inner_join(player_info, percentile_info, by = 'bbref_id')
+
+# Per Game Stats ----
+# per_game = read.csv(paste0(file_path, "nba_projects/data/nba/basketball_reference/player_data/per_game/per_game_table.csv"),
+#                     stringsAsFactors = FALSE)
+
+# Per 100 Stats ----
+per_100 = read.csv("~/Documents/nba_projects/data/nba/basketball_reference/player_data/per100_poss/per100_poss.csv",
+                   stringsAsFactors = FALSE) %>%
+  mutate(SEASON = as.numeric(paste0('20', stringr::str_sub(SEASON, 8, 9))))
+colnames(per_100) = tolower(colnames(per_100))

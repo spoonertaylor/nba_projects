@@ -1,3 +1,16 @@
+#loading-content {
+    position: absolute;
+    padding: 10% 0 0 0;
+    background: #000000;
+    opacity: 0.9;
+    z-index: 100;
+    left: 0;
+    right: 0;
+    height: 100%;
+    text-align: center;
+    color: #FFFFFF;
+}
+
 .percentile {
     font-size: 12px;
     font-weight: bold;
@@ -55,6 +68,12 @@
 .contract_future_early_term {
     font-style: italic;
     color: hotpink;
+}
+
+.btn-buttonClass {
+    background-color: dodgerblue;
+    font-weight: bold;
+    color: white;
 }
 
 pre {

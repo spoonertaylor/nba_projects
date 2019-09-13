@@ -43,9 +43,12 @@ shinyServer(function(input, output, session) {
   output$player_age <- renderUI({
     age = player_info_df()$age
     age_perc = round(100*player_info_df()$age_percentile_position, 0)
+    
+    experience = player_info_df()$experience
+    
     HTML(paste0("Age: ", age, "<text style='font-size: 15px; ",
            "color:", get_percentile_color(age_perc), "'> ",
-           age_perc, "</text>"))
+           age_perc, "</text> | Exp: ", experience, " years"))
   })
   
   # ** Player's Measurements ----
@@ -85,10 +88,13 @@ shinyServer(function(input, output, session) {
   output$player_table <- renderTable({
     player_stats()
   },
-  striped = TRUE,
-  bordered = TRUE,
-  width = '100%',
-  align = 'c',
-  sanitize.text.function = function(x) x)
+    striped = TRUE,
+    bordered = TRUE,
+    width = '100%',
+    align = 'c',
+    sanitize.text.function = function(x) x
+  ) # render player table
+  hide(id = "loading-content", anim = TRUE, animType = "fade")
+  show("app-content")
   
 })

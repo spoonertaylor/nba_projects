@@ -1,8 +1,10 @@
 # PURPOSE: Global script to hold misc functions and package loading
-list.of.packages <- c("shiny","tidyverse", "DT")
+`%!in%` = function(x,y)!('%in%'(x,y))
+list.of.packages <- c("shiny","tidyverse", "DT", "shinyWidgets", "devtools", "shinyjs")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages,function(x){library(x,character.only=TRUE)}) 
+library(shinyjs)
 
 # * Source Files ----
 # * Data ----
@@ -65,7 +67,7 @@ plot_player_projection = function(player_df) {
                                              list('blend' = ~paste('blend')))
   
   player_df = player_df %>% mutate(season = ifelse(stringr::str_detect(season, "-"),
-                                                   stringr::str_sub(season, 6, 9),
+                                                   as.numeric(stringr::str_sub(season, 6, 9)),
                                                    season))
   # Filter
   seasons_played = min(player_df$season):max(player_df$season)
@@ -312,3 +314,5 @@ salary = salary %>%
                     "</text>")
          )) %>%
     select(bbref_id, Season, Salary, `% of Cap`)
+
+# * Per 100 ----
