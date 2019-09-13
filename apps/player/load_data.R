@@ -52,7 +52,7 @@ player_info = inner_join(player_info, percentile_info, by = 'bbref_id')
 #                     stringsAsFactors = FALSE)
 
 # Per 100 Stats ----
-per_100 = read.csv("~/Documents/nba_projects/data/nba/basketball_reference/player_data/per100_poss/per100_poss.csv",
+per_100 = read.csv(paste0(file_path, "nba/basketball_reference/player_data/per100_poss/per100_poss.csv"),
                    stringsAsFactors = FALSE) %>%
   mutate(SEASON = as.numeric(paste0('20', stringr::str_sub(SEASON, 8, 9))))
 colnames(per_100) = tolower(colnames(per_100))

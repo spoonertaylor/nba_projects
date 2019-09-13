@@ -49,7 +49,7 @@ plot_player_projection = function(player_df) {
                    axis.text = element_text(size = 12),
                    panel.grid.minor.x = element_blank()) +
              scale_y_continuous(name = "", limits = c(-5, 10)) +
-             scale_x_continuous(breaks = seasons_played, labels = paste0("'", stringr::str_sub(seasons_played, 3, 4))) + 
+             scale_x_continuous(breaks = seasons_played, labels = paste0("'", as.numeric(stringr::str_sub(seasons_played, 3, 4)))) + 
              geom_vline(aes(xintercept = get_current_season())) +
              labs(
                title = "Player Projection",
