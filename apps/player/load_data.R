@@ -48,11 +48,16 @@ percentile_info = percentile %>% group_by(bbref_id) %>% mutate(max_season = max(
 player_info = inner_join(player_info, percentile_info, by = 'bbref_id')
 
 # Per Game Stats ----
-# per_game = read.csv(paste0(file_path, "nba_projects/data/nba/basketball_reference/player_data/per_game/per_game_table.csv"),
-#                     stringsAsFactors = FALSE)
+per_game = read.csv(paste0(file_path, "nba/basketball_reference/player_data/per_game/per_game_table.csv"),
+                    stringsAsFactors = FALSE)
+per_game = per_game %>% filter(season >= 2014)
+per_game_percentile = read.csv(paste0(file_path, "nba/basketball_reference/player_data/percentile/nba_per_game_percentile_position.csv"),
+                       stringsAsFactors = FALSE)
+per_game_percentile = per_game_percentile %>% filter(season >= 2014)
 
+per_game = per_game %>% left_join(per_game_percentile %>% select(-age, -team), by = c('bbref_id', 'season'))
 # Per 100 Stats ----
-per_100 = read.csv("~/Documents/nba_projects/data/nba/basketball_reference/player_data/per100_poss/per100_poss.csv",
+per_100 = read.csv(paste0(file_path, "nba/basketball_reference/player_data/per100_poss/per100_poss.csv"),
                    stringsAsFactors = FALSE) %>%
   mutate(SEASON = as.numeric(paste0('20', stringr::str_sub(SEASON, 8, 9))))
 colnames(per_100) = tolower(colnames(per_100))

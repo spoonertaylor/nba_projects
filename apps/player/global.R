@@ -139,8 +139,45 @@ plot_player_projection = function(player_df) {
   
 }
 
+# ** Prep Stat for table ----
+prep_stat = function(metric, percentile, percentage = FALSE, team, max_team_number) {
+  if (percentage) {
+    case_when(
+      is.na(metric) ~ "",
+      # See Hassan Whiteside
+      team == "Did Not Play" ~ "",
+      team == 'TOT' | max_team_number != 99 ~ 
+        paste0("<text class='full_team'>",
+               format(round(100*metric,1), nsmall = 1), 
+               "%</text><text class='percentile' style='color:",
+               get_percentile_color(round(100*percentile, 0)),
+               "'> ", round(100*percentile, 0), "</text>"),
+      TRUE ~ paste0("<text class='trade_team'>", format(round(100*metric,1)), "% &nbsp;&nbsp;</text>")
+    )
+  }
+  else {
+    case_when(
+      is.na(metric) ~ "",
+      # See Hassan Whiteside
+      team == "Did Not Play" ~ "",
+      team == 'TOT' | max_team_number != 99 ~ 
+        paste0("<text class='full_team'>", metric, "</text><text class='percentile' style='color:", 
+               get_percentile_color(round(100*percentile, 0)),
+               "'>&nbsp;\n",
+               round(100*percentile, 0), "</text>",
+               case_when(
+                 round(100*percentile, 0) == 100 ~ "",
+                 round(100*percentile, 0) >= 10 ~ "",
+                 TRUE ~ ""
+               )),
+      TRUE ~ paste0("<text class='trade_team'><pre>", metric, "&nbsp;&nbsp;&nbsp;&nbsp;</pre></text>")
+      
+    )
+  }
+}
+
 # * Prep Data ----
-# Create player selection table
+# ** Player Select ----
 # First find the last team everyone played for
 player_select = advanced_stats %>% filter(team != 'TOT', season >= 2014) %>%
   group_by(bbref_id) %>% mutate(max_season = max(season)) %>%
@@ -157,8 +194,55 @@ player_select = left_join(player_select, team, by = c('team' = 'bbref_team_id'))
 player_select = player_select %>% mutate(player_select_col = paste0(player_name, " (", team_mascot, ")"))
 player_select = player_select %>% arrange(last_name_lower)
 
+# ** Per Game ----
+per_game = per_game %>%
+  group_by(bbref_id, season) %>%
+  mutate(team_number = ifelse(team == 'TOT', 99, row_number()))  %>%
+  mutate(max_team_number = max(team_number)) %>%
+  mutate(team_number = ifelse(max_team_number == 99, team_number-1, team_number)) %>%
+  arrange(bbref_id, season, team_number) %>% ungroup()
 
-# Prep advanced stats
+# *** Per Game Percentiles ----
+per_game_percentiles = per_game %>%
+  mutate(
+    Season = ifelse(team_number == 1, 
+                    paste0("<text class ='full_team'>", season, "</text>"), ""),
+    Team = ifelse(team == 'TOT' | max_team_number != 99, 
+                  paste0("<text class='full_team'>", team, "</text>"),
+                  paste0("<text class='trade_team'>", team, "</text>")),
+    Pos = ifelse(team == 'TOT' | max_team_number != 99,
+                 paste0("<text class='full_team'>", advanced_position_cluster, "</text>"),
+                 paste0("<text class='trade_team'>", advanced_position_cluster, "</text>")),
+    Age = prep_stat(age, age_percentile_position, FALSE, team, max_team_number),
+    GP = prep_stat(games_played, games_played_percentile_position, FALSE, team, max_team_number),
+    GS = prep_stat(games_started, games_started_percentile_position, FALSE, team, max_team_number),
+    MP = prep_stat(minutes_played, minutes_percentile_position, FALSE, team, max_team_number),
+    FG = prep_stat(field_goals_made, fg_percentile_position, FALSE, team, max_team_number),
+    FGA = prep_stat(field_goals_attempted, fga_percentile_position, FALSE, team, max_team_number),
+    `FG%` = prep_stat(field_goal_perc, fg_percent_percentile_position, TRUE, team, max_team_number),
+    `3P` = prep_stat(three_point_made, three_point_made_percentile_position, FALSE, team, max_team_number),
+    `3PA` = prep_stat(three_point_attempted, three_point_attempt_percentile_position, FALSE, team, max_team_number),
+    `3P%` = prep_stat(three_point_perc, three_point_percent_percentile_position, TRUE, team, max_team_number),
+    `2P` = prep_stat(two_point_made, two_point_made_percentile_position, FALSE, team, max_team_number),
+    `2PA` = prep_stat(two_point_attempted, two_point_attempt_percentile_position, FALSE, team, max_team_number),
+    `2P%` = prep_stat(two_point_perc, two_point_percent_percentile_position, TRUE, team, max_team_number),
+    FT = prep_stat(free_throw_made, free_throw_made_percentile_position, FALSE, team, max_team_number),
+    FTA = prep_stat(free_throw_attempted, free_throw_attempt_percentile_position, FALSE, team, max_team_number),
+    `FT%` = prep_stat(free_throw_perc, free_throw_percent_percentile_position, TRUE, team, max_team_number),
+    ORB = prep_stat(offensive_rebounds, oreb_percentile_position, FALSE, team, max_team_number),
+    DRB = prep_stat(defensive_rebounds, drb_percentile_position, FALSE, team, max_team_number),
+    TRB = prep_stat(total_rebounds, trb_percentile_position, FALSE, team, max_team_number),
+    AST = prep_stat(assists, ast_percentile_position, FALSE, team, max_team_number),
+    STL = prep_stat(steals, stl_percentile_position, FALSE, team, max_team_number),
+    BLK = prep_stat(blocks, blk_percentile_position, FALSE, team, max_team_number),
+    TOV = prep_stat(turnovers, turnover_percentile_position, FALSE, team, max_team_number),
+    PF = prep_stat(fouls, foul_percentile_position, FALSE, team, max_team_number),
+    PTS = prep_stat(points, points_percentile_position, FALSE, team, max_team_number),
+  ) %>%
+  select(bbref_id, Season, Team, Pos, Age, GP, GS, MP, FG, FGA, `FG%`, `3P`, `3PA`, `3P%`,
+         `2P`, `2PA`, `2P%`, FT, FTA, `FT%`, ORB, DRB, TRB, AST, STL, BLK, PF, PTS)
+
+# ** Advanced Stats ----
 advanced_stats = advanced_stats %>% filter(season >= 2014) %>% 
   group_by(bbref_id, season) %>%
   mutate(team_number = ifelse(team == 'TOT', 99, row_number()))  %>%
