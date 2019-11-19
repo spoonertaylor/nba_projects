@@ -7,7 +7,8 @@ player = player %>% filter(!is.na(player_name))
 
 team = read.csv(paste0(file_path, 'nba/team_id/nba_team_id.csv'), stringsAsFactors = FALSE)
 # Projection table
-projection = read.csv(paste0(file_path,'nba/projections/projections.csv'), stringsAsFactors = FALSE)
+projection = read.csv("../../modeling/player_projection_model/chris/modeling/predictions/actuals_and_predictions.csv", stringsAsFactors = FALSE)
+
 # Position table
 position = read.csv(paste0(file_path, 'nba/basketball_reference/player_data/positional_estimates/player_position_estimates.csv'),
                     stringsAsFactors = FALSE)
